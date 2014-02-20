@@ -159,9 +159,8 @@ class HiddenLayer(BaseLayer):
             length: n_neurons
 
         '''
-        #v = self.W * X.T + self.b
-        self._z = np.array([self.neurons[i].activate(X) for 
-                    i in range(self.n_neurons)])
+        for neuron in self.neurons:
+            neuron.activate(X)
         self._z = np.array([self.neurons[i].z \
                 for i in range(self.n_neurons)])
         self._a = np.array([self.neurons[i].a \
@@ -181,6 +180,10 @@ class HiddenLayer(BaseLayer):
     @property
     def z(self):
         return self._z
+
+    @property
+    def a(self):
+        return self._a
 
     def _init(self):
         '''
