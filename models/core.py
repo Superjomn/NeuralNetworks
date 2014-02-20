@@ -56,7 +56,7 @@ class Neuron(object):
 
     @property
     def b(self):
-        return self.tolayer.b if self.tolayer else self._b
+        return self.tolayer.b[self.index] if self.tolayer else self._b
 
     # sum
     @property
@@ -75,10 +75,19 @@ class Neuron(object):
                 the input
         '''
         #print 'self.W.shape', self.W.shape
-        #print 'X.T.shape', X.T.shape
-        self._z = sum(self.W * X.T)
+        #print 'X.shape', X.shape
+        self._z = np.sum(self.W * X) + self.b
         self._a =  self.f(self._z) 
         return self._a
+
+    def show(self):
+        print '.' * 50
+        print '<Neuron:'
+        print 'W:'
+        print self.W
+        print 'b:'
+        print self.b
+        print '>.'
 
     def _init(self):
         if None in (self.f, self.W):
@@ -139,7 +148,6 @@ class HiddenLayer(BaseLayer):
         self._a = None
         self._init()
 
-
     def forward(self, X):
         '''
         :parameters:
@@ -179,7 +187,7 @@ class HiddenLayer(BaseLayer):
         init parameters
         '''
         self.W = self.W if self.W else np.random.random((self.n_neurons, self.n_features))
-        self.b = self.b if self.b is not None else 0
+        self.b = self.b if self.b is not None else np.random.random( self.n_neurons)
         self.f = self.f if self.f else utils.sigmoid
         # create neurons
         self.neurons = [
@@ -187,13 +195,15 @@ class HiddenLayer(BaseLayer):
                 index=i) for i in range(self.n_neurons) ]
 
     def show(self):
-        print '.. Layer'
+        print '<Layer:'
         print 'n_neurons', self.n_neurons
-        print '>W', self.W
-        print '> W shape:', self.W.shape
-        print '>b', self.b
-        print '>f', self.f
-        print '.' * 50
+        print 'W'
+        print self.W
+        print 'b'
+        print self.b
+        print 'f'
+        print self.f
+        print '>'
 
 
 
