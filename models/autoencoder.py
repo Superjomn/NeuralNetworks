@@ -132,12 +132,13 @@ class OutputLayer(BaseLayer):
         self.f = f
         self.par_f = f
         self.n_neurons = n_neurons
+        self._init()
 
     def forward(self, X=None):
-        X = X if X else self.lower_layer.a
+        X = X if X is not None else self.lower_layer.a
         self.z = self.lower_layer.W * \
-            (np.ones(self.n_neurons, 1) * \
-            X.reshape(1, self.n_neurons))
+            (np.ones((self.n_neurons, 1)) * \
+            X.reshape((1, self.lower_layer.n_neurons)))
         self.z = np.sum(self.z, axis=1) + self.lower_layer.b
         self.a = self.f(self.z)
         return self.a
@@ -151,6 +152,10 @@ class OutputLayer(BaseLayer):
         self.cost = np.array(self.cost)
         #self.cost = -(Y - self.a) * self.par_f(self.z)
         return self.cost
+
+    def _init(self):
+        self.f = self.f if self.f else utils.sigmoid
+        self.par_f = self.par_f if self.par_f else utils.sigmoid_der
 
 
 

@@ -95,7 +95,37 @@ class TestOutputLayer(unittest.TestCase):
         pass
 
     def test_backword(self):
-        pass
+        def get_cost(Y, a, par_f, z):
+            thetas = []
+            for i in range(len(a)):
+                theta_i = \
+                    - (Y[i] - a[i]) *\
+                    par_f(z[i])
+                thetas.append(theta_i)
+            return np.array(thetas)
+
+        Y = np.array([0, 1])
+        X = np.array([1, 0, 0, 1, 1, 0, 1, 1])
+        layer1 = HiddenLayer(n_neurons=8, n_features=2, f=sigmoid)
+        output_layer = OutputLayer(n_neurons=2)
+        output_layer.set_lower_layer(layer1)
+        output_layer.forward(X)
+
+        Y = np.array([1, 0])
+        mycost = get_cost(Y, 
+            output_layer.a,
+            output_layer.par_f,
+            output_layer.z)
+
+        cost = output_layer.backward(Y)
+        print 'output mycost'
+        print mycost
+        print 'output cost'
+        print cost
+        self.assertTrue(
+            (mycost == cost).all())
+
+
 
 
 
