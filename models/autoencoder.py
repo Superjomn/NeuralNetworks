@@ -10,6 +10,8 @@ from __future__ import division
 import numpy as np
 import utils
 
+ALPHA = 0.01
+
 class BaseLayer(object):
     def __init__(self):
         self.upper_layer = None
@@ -50,7 +52,7 @@ class HiddenLayer(BaseLayer):
     input activations of the previous layer
     and output activations of the current layer
     '''
-    def __init__(self, W=None, f=None, par_f=None, b=None, n_neurons=None, n_features=None):
+    def __init__(self, W=None, f=None, par_f=None, b=None, n_neurons=None, n_features=None, alpha=ALPHA):
         '''
         :parameters:
             f:  function
@@ -65,12 +67,15 @@ class HiddenLayer(BaseLayer):
                 number of current layer's neurons
             n_features: integer
                 number of next layer's neurons
+            alpha: float
+                study radio
         '''
         BaseLayer.__init__(self)
         self.W = W
         self.f = f
         self.par_f = par_f
         self.b = b
+        self.alpha = alpha
         self.n_neurons = n_neurons
         self.n_features = n_features
         self.upper_layer = None
@@ -101,8 +106,8 @@ class HiddenLayer(BaseLayer):
         #print 'self.W.shape', self.W.shape
         #print 'up_cost', up_cost.shape
         par_b = up_cost
-        self.W += par_W
-        self.b += par_b
+        self.W -= self.alpha * par_W
+        self.b -= self.alpha * par_b
         return self.cost
 
     def _init(self):
