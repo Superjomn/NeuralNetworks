@@ -126,6 +126,29 @@ class TestOutputLayer(unittest.TestCase):
             (mycost == cost).all())
 
 
+class TestAutoEncoder(unittest.TestCase):
+
+    def test_init(self):
+        AutoEncoder(8, 4)
+
+    def test_train(self):
+        autoencoder = AutoEncoder(8, 4)
+        inputs = [
+            np.random.random(8) for  i in range(10) ]
+                
+        autoencoder.train(inputs, n_iters=10)
+
+    def test_reconst(self):
+        autoencoder = AutoEncoder(8, 4)
+        inputs = [
+            np.random.random(8) for  i in range(10) ]
+                
+        autoencoder.train(inputs, n_iters=10)
+        #print 'reconst', autoencoder.layer1.reconst()
+
+
+
+
 
 
 

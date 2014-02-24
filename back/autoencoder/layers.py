@@ -9,7 +9,6 @@ Created on Aug 9, 2013
 from __future__ import division
 
 import numpy as np
-import sys
 
 null = lambda x: 0
 identity = lambda x: x
@@ -47,6 +46,9 @@ class SigmoidLayer(BaseLayer):
         X = self.noise_regularizer(X)
         if self.bias:
             X = np.column_stack([np.ones((X.shape[0],1)), X])
+        print 'noise, X', X
+        print 'self.W'
+        print self.W
         self.input = X
         self.output = np.tanh(np.dot(self.input, self.W)) 
         self.gradOutput = 1 - self.output**2
@@ -75,4 +77,17 @@ class SoftmaxLayer(BaseLayer):
         self.output = v/np.sum(v)
         self.gradOutput = self.output*(1 - self.output)
         return self.output
+
+if __name__ == '__main__':
+    layer = SigmoidLayer(
+        n_input = 8,
+        n_output = 4)
+    X = np.array([1, 0, 1, 0, 1, 1, 0, 0])
+    Y = np.array([1, 0, 0, 1])
+    a = layer.activate(X)
+    transfer = layer.backwardPass(Y)
+    print 'a'
+    print a
+    print 'transfer',
+    print transfer
         

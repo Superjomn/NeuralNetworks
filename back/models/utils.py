@@ -16,7 +16,7 @@ def sigmoid_der(x):
     '''
     derivation of sigmoid
     '''
-    return - np.exp(x) \
+    return - np.exp(x) /\
         (np.exp(x) + 1) ** 2
 
 def tanh(z):

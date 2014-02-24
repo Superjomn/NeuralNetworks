@@ -8,6 +8,8 @@ Created on Aug 9, 2013
 '''
 from __future__ import division
 import numpy as np
+import sys
+sys.path.append('..')
 import layers
 import noise
 

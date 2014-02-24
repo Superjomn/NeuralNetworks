@@ -71,14 +71,6 @@ class TestHiddenLayer(unittest.TestCase):
         self.assertEqual(W.shape[0], len(b))
         self.layer.forward(self.X)
 
-    def test_neuron_status(self):
-        W = self.layer.W
-        b = self.layer.b
-        neurons = self.layer.neurons
-        self.assertEqual(len(neurons), self.n_neurons)
-        for i,neuron in enumerate(neurons):
-            self.assertTrue((neuron.W == W[i]).all())
-            self.assertTrue(neuron.b == b[i])
 
     def test_forward(self):
         W = self.layer.W
@@ -100,7 +92,13 @@ class TestHiddenLayer(unittest.TestCase):
             (_as == self.layer.a).all())
 
     def test_backward(self):
-        upl_cost = self.X - 1
+        upl_cost = np.array([1, 0, 1])
+        self.layer.forward(self.X)
+        cost = self.layer.backward(upl_cost)
+        print 'cost', cost
+        print 'W', self.layer.W
+        print 'b', self.layer.b
+
 
 
 

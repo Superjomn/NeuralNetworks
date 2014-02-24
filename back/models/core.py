@@ -12,91 +12,12 @@ import utils
 
 alpha = 0.01
 
-class Neuron(object):
-    def __init__(self, f=None, W=None, b=None, index=-1, tolayer=None):
-        '''
-        a basic neuron
-
-        :parameters:
-            tolayer: object of Layer
-                to pass the parameters
-            f: function
-                activation function
-            W: vector
-                weight vector or matrix
-                if current object is a single neuron, then pass
-                    in a vector
-                if it belongs to a layer, then a weight matrix
-                    should be passed, each neuron's weight 
-                    vector is the indexth row of weight matrix
-            b: float
-                bias
-            index: integer
-                neuron's id of a layer, to get the 
-                corresponding weight row in weight matrix W
-        '''
-        self.tolayer = tolayer
-        self.index = index
-        self._f = f
-        self._W = W
-        self._b = b
-        self._z = None
-        self._a = None
-
-    @property
-    def f(self):
-        return self.tolayer.f if self.tolayer else self._f
-
-    @property
-    def W(self):
-        if self.index != -1:
-            return self.tolayer.W[self.index]
-        else:
-            return self._W
-
-    @property
-    def b(self):
-        return self.tolayer.b[self.index] if self.tolayer else self._b
-
-    # sum
-    @property
-    def z(self):
-        return self._z
-
-    # activation
-    @property
-    def a(self):
-        return self._a
-
-    def activate(self, X):
-        '''
-        :parameters: 
-            X: vector
-                the input
-        '''
-        #print 'self.W.shape', self.W.shape
-        #print 'X.shape', X.shape
-        self._z = np.sum(self.W * X) + self.b
-        self._a =  self.f(self._z) 
-        return self._a
-
-    def show(self):
-        print '.' * 50
-        print '<Neuron:'
-        print 'W:'
-        print self.W
-        print 'b:'
-        print self.b
-        print '>.'
-
-    def _init(self):
-        if None in (self.f, self.W):
-            raise Exception("None in self.f, self.W")
-
-
 class BaseLayer(object):
     def set_next_layer(self, layer):
         self.next_layer = layer
+
+    def set_last_layer(self, layer):
+        self.last_layer = layer
 
     def forward(self, X):
         '''
@@ -116,6 +37,24 @@ class BaseLayer(object):
         '''
         raise NotImplemented
 
+class InputLayer(BaseLayer):
+    def __init__(self, X=None):
+        if not X is None:
+            self.set_input(X)
+
+    def set_input(self, X):
+        self.X = X
+
+    def _init(self):
+        length = len(self.X)
+        self.W = np.identity(length)
+        self.b = np.zeros(length)
+
+    def forward(self):
+        pass
+
+    def backward(self):
+        pass
 
 
 class HiddenLayer(BaseLayer):
@@ -159,21 +98,33 @@ class HiddenLayer(BaseLayer):
             length: n_neurons
 
         '''
-        for neuron in self.neurons:
-            neuron.activate(X)
-        self._z = np.array([self.neurons[i].z \
-                for i in range(self.n_neurons)])
-        self._a = np.array([self.neurons[i].a \
-                for i in range(self.n_neurons)])
+        self.b = self.b.reshape(self.n_neurons, 1)
+        self._z = np.sum(self.W * X + \
+                self.b * np.ones((1, self.n_features)),
+                    axis=1)
+        self._a = self.f(self._z)
         return self._a
 
     def backward(self, upl_cost):
-        cost = np.sum(self.W * upl_cost) * \
-                utils.sigmoid_der(self.z)
-        self.par_W = self.a * cost
-        self.par_b = cost
-        self.W -= alpha * self.par_w
-        self.b -= alpha * self.par_b
+        '''
+        :parameters:
+            upl_cost: vector
+                theta of upper layer
+        '''
+        par_W = np.dot(
+            upl_cost.reshape(self.n_neurons, 1), 
+            self.a.reshape(1, self.n_neurons))
+        #self.a.reshape((self.n_neurons, 1)) * (upl_cost.T * np.ones((self.n_neurons, self.n_features)))
+        print 'par_w'
+        print par_W
+        par_b = upl_cost
+
+        self.W -= alpha * par_W 
+        self.b -= alpha * np.squeeze(par_b)
+        cost = np.array(np.sum(self.W * upl_cost) * \
+                utils.sigmoid_der(self.z))
+        cost = cost.reshape((1, self.n_neurons))
+
         return cost
 
 
@@ -192,10 +143,6 @@ class HiddenLayer(BaseLayer):
         self.W = self.W if self.W else np.random.random((self.n_neurons, self.n_features))
         self.b = self.b if self.b is not None else np.random.random( self.n_neurons)
         self.f = self.f if self.f else utils.sigmoid
-        # create neurons
-        self.neurons = [
-            Neuron(tolayer=self,
-                index=i) for i in range(self.n_neurons) ]
 
     def show(self):
         print '<Layer:'
