@@ -47,11 +47,9 @@ class HiddenLayer(object):
         self.n_visible, self.n_output = n_visible, n_output
         self.activation = activation
         self.params = [self.W, self.b]
-
-    def activate(self):
+        # a output hock
         self.output = self.activation(
             T.dot(self.X, self.W) + self.b)
-        return self.output
 
 
 class MultiLayerPerceptron(object):

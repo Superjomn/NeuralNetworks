@@ -19,11 +19,14 @@ theano.config.mode = 'FAST_COMPILE'
 
 
 class SoftmaxRegression(object):
-    def __init__(self, n_features=500, n_states=10, learning_rate=0.01):
+    def __init__(self, input=None, n_features=500, n_states=10, learning_rate=0.01):
         self.n_features = n_features
         self.n_states = n_states
         # x is a vector
-        self.x = T.fvector('x')
+        self.x = input
+        if not self.x:
+            self.x = T.fvector('x')
+
         # y is a label(0 1 2 3 ..)
         self.y = T.bscalar('y')
         # test value
