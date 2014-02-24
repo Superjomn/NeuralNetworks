@@ -62,10 +62,11 @@ class AutoEncoder(object):
         self.b = bhid
         self.b_prime = bvis
         self.W_prime = self.W.T
+        self.numpy_rng = numpy_rng
 
         if input == None:
             #self.X = T.dmatrix(name='input')
-            self.X = T.vector(name='X', dtype=theano.config.floatX)
+            self.X = T.fvector(name='X')
         else:
             self.X = input
 
