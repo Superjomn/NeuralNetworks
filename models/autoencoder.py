@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 '''
-Created on Aug 9, 2013
+Created on Feb 23, 2014
 
-@author: Chunwei Yan @ pkusz
+@author: Chunwei Yan @ PKU
 @mail:  yanchunwei@outlook.com
 '''
 import numpy
