@@ -15,6 +15,7 @@ from autoencoder import AutoEncoder
 
 class DenoisingAutoEncoder(AutoEncoder):
     def __init__(self, numpy_rng=None, input=None, n_visible=8, n_hidden=4,
+            corrupt_level=0.0,
             W=None, bhid=None, bvis=None, theano_rng=None):
 
         AutoEncoder.__init__(self, 
@@ -31,11 +32,16 @@ class DenoisingAutoEncoder(AutoEncoder):
             theano_rng = RandomStreams(self.numpy_rng.randint(2 ** 3))
         self.theano_rng = theano_rng
 
-    def get_corrupted_input(self, input, level=0.1):
+        self.corrupt_level = corrupt_level
+
+    def get_corrupted_input(self, input, level=None):
         ''' add noise to input '''
         #return self.theano_rng.binomial(
             #size = input.shape,
             #n = 1, p = 1-level) * input
+        if level is None:
+            level = self.corrupt_level
+
         return self.theano_rng.binomial(size=input.shape, n=1, p=1 - level) * input
 
     def get_cost_updates(self, learning_rate, currupt_level=0.1):
