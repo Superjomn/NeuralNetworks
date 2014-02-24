@@ -13,6 +13,28 @@ from theano import tensor as T
 class AutoEncoder(object):
     def __init__(self, numpy_rng=None, input=None, n_visible=8, n_hidden=4,
             W=None, bhid=None, bvis=None):
+        '''
+        :parameters:
+        input: array(vectors)
+            each line is a record vector
+
+        n_visible: integer
+            number of visible nodes -- record's dimentions
+
+        n_hidden: integer
+            number of hidden nodes -- the hidden code
+            as a hign level abstract representation of the
+            original code.
+
+        W : float32 matrix
+            the weights
+
+        bhid: vector
+            hidden bias
+
+        bvis: vector
+            visible bias
+        '''
         self.n_visible = n_visible
         self.n_hidden = n_hidden
 
@@ -117,8 +139,3 @@ if __name__ == "__main__":
     data = rng.randn(400, 60).astype(theano.config.floatX)
 
     autoencoder.train(data)
-
-
-
-
-
