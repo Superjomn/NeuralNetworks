@@ -40,7 +40,7 @@ class DenoisingAutoEncoder(AutoEncoder):
 
     def get_cost_updates(self, learning_rate, currupt_level=0.1):
         corrupt_X = self.get_corrupted_input(self.X, currupt_level)
-        print 'corrupt_X type', corrupt_X.dtype
+        #print 'corrupt_X type', corrupt_X.dtype
         y = self.get_hidden_values(corrupt_X)
         #y = self.get_hidden_values(self.X)
         z = self.get_reconstructed_input(y)
@@ -59,15 +59,15 @@ class DenoisingAutoEncoder(AutoEncoder):
         n_features, n_items = data.shape
         # compile function
         cost, updates = self.get_cost_updates(learning_rate=0.1)
-        c_data = self.get_corrupted_input(self.X, 0.5)
-        corrupt = theano.function([self.X], c_data)
-        getx = theano.function([self.X], self.X, allow_input_downcast=True)
-        print 'original ...'
-        print getx(data[0])
-        print getx(data[0]).dtype
-        print 'corrupt ...'
-        print corrupt(data[0])
-        print corrupt(data[0]).dtype
+        #c_data = self.get_corrupted_input(self.X, 0.5)
+        #corrupt = theano.function([self.X], c_data)
+        #getx = theano.function([self.X], self.X, allow_input_downcast=True)
+        #print 'original ...'
+        #print getx(data[0])
+        #print getx(data[0]).dtype
+        #print 'corrupt ...'
+        #print corrupt(data[0])
+        #print corrupt(data[0]).dtype
 
         trainer = theano.function([self.X], cost, 
         updates=updates, 
@@ -84,8 +84,9 @@ class DenoisingAutoEncoder(AutoEncoder):
 
 
 if __name__ == "__main__":
+    print 'floatX', theano.config.floatX
     rng = numpy.random
-    data = rng.randn(400, 60).astype(theano.config.floatX)
+    data = rng.randn(400, 60).astype('float32')
 
     auto = DenoisingAutoEncoder(
         n_visible = 60,
