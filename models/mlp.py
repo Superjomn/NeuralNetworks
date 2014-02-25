@@ -118,7 +118,7 @@ class MultiLayerPerceptron(object):
         for param, gparam in zip(self.params, gparams):
             updates.append(
                 (param, param - self.learning_rate * gparam))
-        print 'updates', updates
+        #print 'updates', updates
         # train model
         self.trainer = theano.function( 
             inputs = [self.x, self.y],
@@ -142,8 +142,8 @@ if __name__ == '__main__':
     y_set = rng.randint(size=400, low=0, high=5).astype(theano.config.floatX)
     n_rcds = x_set.shape[0]
 
-    print 'hid.b:\t', mlp.hidden_layer.b.eval()
-    print 'output.b:\t', mlp.output_layer.b.eval()
+    #print 'hid.b:\t', mlp.hidden_layer.b.eval()
+    #print 'output.b:\t', mlp.output_layer.b.eval()
     for no in xrange(100):
         errors = []
         y_preds = []
@@ -160,8 +160,8 @@ if __name__ == '__main__':
         print "%dth\t%f" % (no, e)
         print "original:\t", y_set[:30]
         print "predict:\t", y_preds[:30]
-        print 'hid.b:\t', mlp.hidden_layer.b.eval()
-        print 'output.b:\t', mlp.output_layer.b.eval()
+        #print 'hid.b:\t', mlp.hidden_layer.b.eval()
+        #print 'output.b:\t', mlp.output_layer.b.eval()
 
 
 
