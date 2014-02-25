@@ -97,7 +97,6 @@ class StackedAutoEncoder(object):
 
         self.params += self.output_layer.params
     
-    def get_cost(self):
         # top layer's cost
         self.fineture_cost = \
                 self.output_layer.negative_log_likelihood(self.y)
@@ -149,8 +148,9 @@ class StackedAutoEncoder(object):
             inputs = [self.x, self.y],
             outputs = self.fineture_cost
             )
+        return train_fn, predict_fn
 
-    def pretrain(self, dataset):
+    def pretrain(self, dataset, n_iters=3):
 
         pretraining_fns = self.compile_pretrain_funcs()
         # finetune functions
@@ -161,24 +161,33 @@ class StackedAutoEncoder(object):
         n_records = dataset.shape[0]
 
         for no in xrange(self.n_layers):
-            costs = []
-            for rid in xrange(n_records):
-                x = dataset[rid]
-                c = pretraining_fns[no]( x) 
-                costs.append(c)
+            for t in xrange(n_iters):
+                costs = []
+                for rid in xrange(n_records):
+                    x = dataset[rid]
+                    c = pretraining_fns[no]( x) 
+                    costs.append(c)
 
-            print 'pretraining layer %d\tcost\t%f' % (
-                        no, numpy.array(costs).mean()
-                    )
+                print 'pretraining layer %d\tcost\t%f' % (
+                            no, numpy.array(costs).mean()
+                        )
             
 
-    def finetune(self, dataset):
+    def finetune(self, records, labels):
         '''
         '''
         print '... finetunning the model'
         # TODO scan the parameter space and get the
         # best parameters and stop training
-        pass
+        train_fn, predict_fn = self.compile_finetune_funcs()
+        n_records = records.shape[0]
+        costs = []
+        for i in xrange(n_records):
+            x, y = records[i], labels[i]
+            cost = train_fn(x, y)
+            costs.append(cost)
+        print 'fineture error:\t%f' % numpy.array(costs).mean()
+
 
 
 
@@ -192,7 +201,9 @@ if __name__ == "__main__":
 
     numpy_rng=numpy.random.RandomState(1234)
     data = numpy_rng.randn(400, 30).astype(theano.config.floatX)
+    labels = numpy_rng.randint(size=400, low=0, high=5).astype(theano.config.floatX)
 
     stacked_autoencoder.init_layers()
     stacked_autoencoder.pretrain(data)
+    stacked_autoencoder.finetune(data, labels)
 
