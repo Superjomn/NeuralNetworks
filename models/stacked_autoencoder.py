@@ -205,6 +205,6 @@ if __name__ == "__main__":
     labels = numpy_rng.randint(size=400, low=0, high=5).astype(theano.config.floatX)
 
     stacked_autoencoder.init_layers()
-    stacked_autoencoder.pretrain(data)
-    stacked_autoencoder.finetune(data, labels)
+    stacked_autoencoder.pretrain(data, n_iters=20)
+    stacked_autoencoder.finetune(data, labels, n_iters=20)
 
