@@ -173,7 +173,7 @@ class StackedAutoEncoder(object):
                         )
             
 
-    def finetune(self, records, labels):
+    def finetune(self, records, labels, n_iters=5):
         '''
         '''
         print '... finetunning the model'
