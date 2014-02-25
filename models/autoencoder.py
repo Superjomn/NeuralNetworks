@@ -46,17 +46,22 @@ class AutoEncoder(object):
                 numpy_rng.uniform(
                     low=-4 * numpy.sqrt(6. / (n_hidden + n_visible)),
                     high=4 * numpy.sqrt(6. / (n_hidden + n_visible)),
-                    size=(n_visible, n_hidden)), dtype=theano.config.floatX)
-            W = theano.shared(value=initial_W, name='W')
-
+                    size=(n_visible, n_hidden)), 
+                dtype=theano.config.floatX)
+            W = theano.shared(
+                value=initial_W, 
+                name='W'
+                )
         if not bvis:
             bvis = theano.shared(value=numpy.zeros(n_visible, 
                 dtype=theano.config.floatX),
+                borrow = True,
                 name='bvis')
 
         if not bhid:
             bhid = theano.shared(value = numpy.zeros(n_hidden,
                 dtype=theano.config.floatX),
+                borrow = True,
                 name='bhid')
         self.W = W
         self.b = bhid
@@ -137,6 +142,7 @@ if __name__ == "__main__":
             print i, 'cost', numpy.mean(numpy.array(costs))
 
     autoencoder = AutoEncoder(numpy_rng=numpy.random.RandomState(1234), n_visible=60, n_hidden=30)
+    print 'autoencoder.W', type(autoencoder.W)
     data = rng.randn(400, 60).astype(theano.config.floatX)
 
     autoencoder.train(data)

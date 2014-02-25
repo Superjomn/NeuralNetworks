@@ -58,7 +58,9 @@ class DenoisingAutoEncoder(AutoEncoder):
         gparams = T.grad(cost, self.params)
         updates = []
         for param, gparam in zip(self.params, gparams):
-            updates.append((param, param - learning_rate * gparam))
+            up = param - learning_rate * gparam
+            up = T.cast(up, theano.config.floatX)
+            updates.append((param, up))
         return cost, updates
     
     def train(self, data=None, n_iters=1000, learning_rate=0.1):
@@ -92,7 +94,7 @@ class DenoisingAutoEncoder(AutoEncoder):
 if __name__ == "__main__":
     print 'floatX', theano.config.floatX
     rng = numpy.random
-    data = rng.randn(400, 60).astype('float32')
+    data = rng.randn(400, 60).astype(theano.config.floatX)
 
     auto = DenoisingAutoEncoder(
         n_visible = 60,

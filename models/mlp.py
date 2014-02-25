@@ -31,10 +31,21 @@ class HiddenLayer(object):
                     low=-4 * numpy.sqrt(6. / (n_output + n_visible)),
                     high=4 * numpy.sqrt(6. / (n_output + n_visible)),
                     size=(n_visible, n_output)), dtype=theano.config.floatX)
-            W = theano.shared(value=initial_W, name='W', borrow=True)
 
             if activation == theano.tensor.nnet.sigmoid:
-                W *= 4
+                initial_W = numpy.asarray(
+                    rng.uniform(
+                        low=-16 * numpy.sqrt(6. / (n_output + n_visible)),
+                        high=16 * numpy.sqrt(6. / (n_output + n_visible)),
+                        size=(n_visible, n_output)), dtype=theano.config.floatX)
+
+            W = theano.shared(
+                value=initial_W, 
+                name='W', 
+                borrow=True,
+                )
+
+            T.unbroadcast(W)
 
         if not b:
             b_values = numpy.zeros((n_output,), dtype=theano.config.floatX)
@@ -116,8 +127,10 @@ class MultiLayerPerceptron(object):
 
         updates = []
         for param, gparam in zip(self.params, gparams):
+            up = T.cast(param - self.learning_rate * gparam, 
+                    theano.config.floatX)
             updates.append(
-                (param, param - self.learning_rate * gparam))
+                (param, up))
         #print 'updates', updates
         # train model
         self.trainer = theano.function( 
@@ -136,6 +149,7 @@ if __name__ == '__main__':
             n_output = 5,
             learning_rate = 0.03,
             )
+    print 'type of W', type(mlp.hidden_layer.W)
     mlp.compile()
     rng = numpy.random
     x_set = rng.randn(400, 50).astype(theano.config.floatX)
