@@ -182,11 +182,12 @@ class StackedAutoEncoder(object):
         train_fn, predict_fn = self.compile_finetune_funcs()
         n_records = records.shape[0]
         costs = []
-        for i in xrange(n_records):
-            x, y = records[i], labels[i]
-            cost = train_fn(x, y)
-            costs.append(cost)
-        print 'fineture error:\t%f' % numpy.array(costs).mean()
+        for t in xrange(n_iters):
+            for i in xrange(n_records):
+                x, y = records[i], labels[i]
+                cost = train_fn(x, y)
+                costs.append(cost)
+            print 'fineture error:\t%f' % numpy.array(costs).mean()
 
 
 
