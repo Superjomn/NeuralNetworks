@@ -36,12 +36,15 @@ class SoftmaxRegression(object):
         #self.y = T.cast(y, 'int32')
         
         self.b = theano.shared(numpy.zeros((n_states)),
-                name = 'b')
+            name = 'b',
+            borrow = True,
+            )
         self.W = theano.shared(
-                numpy.zeros(( n_states, n_features)),
-                name = 'W')
-        print 'self.W'
-        print self.W.shape
+            value = numpy.zeros(( n_states, n_features),
+                dtype=theano.config.floatX),
+            name = 'W',
+            borrow = True,
+            )
         self.p_y_given_x = T.nnet.softmax(
                  T.dot(self.W, self.x)  + self.b)
         # get the max index
@@ -52,6 +55,9 @@ class SoftmaxRegression(object):
             outputs = self.y_pred)
 
         self.learning_rate = learning_rate
+
+        self.params = [self.W, self.b]
+
 
     def negative_log_likelihood(self, y):
         '''

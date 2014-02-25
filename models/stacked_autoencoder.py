@@ -118,7 +118,7 @@ class StackedAutoEncoder(object):
         return fns
 
 
-    def compile_finetune_funcs(self, trainset):
+    def compile_finetune_funcs(self):
         gparams = T.grad(self.fineture_cost, self.params)
         # updates
         for param, gparam in zip(self.params, gparams):
@@ -138,21 +138,32 @@ class StackedAutoEncoder(object):
 
     def train(self, pre_train_set, finetune_set):
 
-        print 'pretraining ...'
         pretraining_fns = self.compile_pretrain_funcs()
-        n_records = pre_train_set.shape[0]
+        # finetune functions
+        ft_train_fn, ft_predict_fn = self.compile_finetune_funcs()
+
+        print 'pretraining ...'
+        ### pretraining
+        n_train_records = pre_train_set.shape[0]
+        n_ft_records = finetune_set.shape[0]
 
         for no in xrange(self.n_layers):
             costs = []
-            for rid in xrange(n_records):
+            for rid in xrange(n_train_records):
                 x = pre_train_set[rid]
                 c = pretraining_fns[no]( x) 
                 costs.append(c)
+
             print 'pretraining layer %d\tcost\t%f' % (
                         no, numpy.array(costs).mean()
                     )
+            
+            print '... finetunning the model'
+            # TODO scan the parameter space and get the
+            # best parameters and stop training
 
-# TODO fine turn here
+
+
 
             
 
