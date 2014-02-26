@@ -6,12 +6,15 @@ Created on Feb 25, 2014
 @mail:  yanchunwei@outlook.com
 '''
 from __future__ import division
+import sys
+sys.path.append('..')
 import csv
 import cPickle as pickle
 import time
 import numpy
 import theano
 from theano import tensor as T
+from utils import Timeit
 
 class Dataset(object):
     def __init__(self, ori_dataset_ph=None, pk_data_ph=None):
@@ -30,7 +33,7 @@ class Dataset(object):
 
     def load_ori_dataset(self):
         print 'load data ...'
-        start_time = time.time()
+        timeit = Timeit()
         with open(self.data_ph) as f:
             reader = csv.reader(f)
             for i,ls in enumerate(reader):
@@ -42,26 +45,27 @@ class Dataset(object):
                 record = [int(r) for r in ls[1:]]
                 self.records.append(record)
                 self.labels.append(label)
-        end_time = time.time()
-        print '> used time: %d seconds' % int(start_time - end_time)
+        timeit.print_time()
 
     def tofile(self):
         print '... save data in pickle format'
+        timeit = Timeit()
         dataset = (self.labels, self.records,)
         with open(self.pk_data_ph, 'wb') as f:
             pickle.dump(dataset, f)
+        timeit.print_time()
 
     def fromfile(self):
         print '... load dataset from :\t %s' % self.pk_data_ph
-        start_time = time.time()
+        timeit = Timeit()
         with open(self.pk_data_ph, 'rb') as a:
             self.labels, self.records = pickle.load(a)
-        end_time = time.time()
-        print '>used %d seconds' % int(end_time - start_time)
+        timeit.print_time()
         print '... done'
         
     def trans_data_type(self, train_prob=0.8):
         print 'trains data ...'
+        timeit = Timeit()
         self.train_prob = train_prob
         n_records = len(self.labels)
         n_trainset = int(n_records * self.train_prob)
@@ -80,6 +84,7 @@ class Dataset(object):
         labels = numpy.array(labels).astype(theano.config.floatX)
         records = numpy.array(records).astype(theano.config.floatX)
         self.validset = (labels, records)
+        timeit.print_time()
         return self.trainset, self.validset
 
 
