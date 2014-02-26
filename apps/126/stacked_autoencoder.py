@@ -61,7 +61,7 @@ class Dataset(object):
         print 'trains data ...'
         self.train_prob = train_prob
         n_records = len(self.labels)
-        n_trainset = n_records * self.train_prob
+        n_trainset = int(n_records * self.train_prob)
 
         self.trainset = (self.labels[:n_trainset], self.records[:n_trainset],)
         # validation set
@@ -87,4 +87,4 @@ if __name__ == '__main__':
     #dataset.tofile()
     dataset.fromfile()
     trainset, validset = dataset.trans_data_type()
-    print trainset.shape, validset.shape
+    #print trainset.shape, validset.shape
