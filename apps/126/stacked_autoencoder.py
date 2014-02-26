@@ -30,6 +30,7 @@ class Dataset(object):
 
     def load_ori_dataset(self):
         print 'load data ...'
+        start_time = time.time()
         with open(self.data_ph) as f:
             reader = csv.reader(f)
             for i,ls in enumerate(reader):
@@ -41,6 +42,8 @@ class Dataset(object):
                 record = [int(r) for r in ls[1:]]
                 self.records.append(record)
                 self.labels.append(label)
+        end_time = time.time()
+        print '> used time: %d seconds' % int(start_time - end_time)
 
     def tofile(self):
         print '... save data in pickle format'
