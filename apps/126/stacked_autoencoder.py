@@ -86,8 +86,8 @@ class Dataset(object):
 
 if __name__ == '__main__':
     dataset = Dataset('./trainset.csv', './dataset.pk')
-    #dataset.load_ori_dataset()
-    #dataset.tofile()
-    dataset.fromfile()
-    trainset, validset = dataset.trans_data_type()
+    dataset.load_ori_dataset()
+    dataset.tofile()
+    #dataset.fromfile()
+    #trainset, validset = dataset.trans_data_type()
     #print trainset.shape, validset.shape
