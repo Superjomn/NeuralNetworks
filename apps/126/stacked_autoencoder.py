@@ -118,6 +118,7 @@ class Dataset(object):
 class Trainer(object):
     def __init__(self, pk_data_ph):
         self.dataset = Dataset(pk_data_ph = pk_data_ph)
+        self._init()
 
     def _init(self):
         self.dataset.fromfile()
@@ -127,23 +128,33 @@ class Trainer(object):
         n_records, n_features = records.shape
         self.sA = StackedAutoEncoder(
             n_visible = n_features,
-            hidden_struct = [300, 100],
+            hidden_struct = [200, 100],
             n_output = 10,
             corrupt_levels = [0.16, 0.16],
             learning_rate = 0.01,
             )
-        self.sA.pretrain(n_iters=4)
-        self.sA.finetune(n_iters=4)
+
+    def __call__(self):
+        labels, records = self.trainset
+        timeit = Timeit(time.time())
+        self.sA.pretrain(records, n_iters=4)
+        timeit.print_time()
+        self.sA.finetune(records, labels, n_iters=4)
+        timeit.print_time()
 
 
 
 
 
 if __name__ == '__main__':
-    dataset = Dataset('./trainset.csv', './norm_float_dataset.pk')
+    #dataset = Dataset('./trainset.csv', './norm_float_dataset.pk')
     #dataset.load_ori_dataset()
-    dataset.load_dataset_to_norm_float()
-    dataset.tofile()
+    #dataset.load_dataset_to_norm_float()
+    #dataset.tofile()
     #dataset.fromfile()
     #trainset, validset = dataset.trans_data_type()
     #print trainset.shape, validset.shape
+    trainer = Trainer(
+        pk_data_ph = './norm_float_dataset.pk'
+        )
+    trainer()

@@ -53,7 +53,9 @@ class StackedAutoEncoder(object):
         self.hidden_layers = []
         self.params = []
 
-    def init_layers(self):
+        self._init_layers()
+
+    def _init_layers(self):
         for no in xrange(self.n_layers):
             n_visible = self.n_visible if no == 0 \
                     else self.hidden_struct[no-1]
@@ -164,6 +166,7 @@ class StackedAutoEncoder(object):
             for t in xrange(n_iters):
                 costs = []
                 for rid in xrange(n_records):
+                    print '> train record:\t%d' % rid
                     x = dataset[rid]
                     c = pretraining_fns[no]( x) 
                     costs.append(c)
@@ -204,7 +207,7 @@ if __name__ == "__main__":
     data = numpy_rng.randn(400, 30).astype(theano.config.floatX)
     labels = numpy_rng.randint(size=400, low=0, high=5).astype(theano.config.floatX)
 
-    stacked_autoencoder.init_layers()
+    #stacked_autoencoder.init_layers()
     stacked_autoencoder.pretrain(data, n_iters=20)
     stacked_autoencoder.finetune(data, labels, n_iters=20)
 
