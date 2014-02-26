@@ -8,6 +8,7 @@ Created on Feb 25, 2014
 from __future__ import division
 import sys
 sys.path.append('..')
+sys.path.append('../../')
 import csv
 import cPickle as pickle
 import time
@@ -15,6 +16,9 @@ import numpy
 import theano
 from theano import tensor as T
 from utils import Timeit
+from models.stacked_autoencoder import StackedAutoEncoder
+
+N_PIXEL_VALUES = 256
 
 class Dataset(object):
     def __init__(self, ori_dataset_ph=None, pk_data_ph=None):
@@ -47,6 +51,27 @@ class Dataset(object):
                 self.labels.append(label)
         timeit.print_time()
 
+    def load_dataset_to_norm_float(self):
+        '''
+        load original dataset and transform
+        value of each pixel to 0-1 float
+        '''
+        print 'load data ...'
+        timeit = Timeit()
+        with open(self.data_ph) as f:
+            reader = csv.reader(f)
+            for i,ls in enumerate(reader):
+                if i == 0:
+                    continue
+                if i % 1000 == 0:
+                    print '> load\t%d\trecords' % i
+                label = int(ls[0])
+                record = [int(r)/N_PIXEL_VALUES for r in ls[1:]]
+                self.records.append(record)
+                self.labels.append(label)
+        timeit.print_time()
+
+
     def tofile(self):
         print '... save data in pickle format'
         timeit = Timeit()
@@ -55,6 +80,7 @@ class Dataset(object):
             pickle.dump(dataset, f)
         timeit.print_time()
 
+
     def fromfile(self):
         print '... load dataset from :\t %s' % self.pk_data_ph
         timeit = Timeit()
@@ -62,6 +88,7 @@ class Dataset(object):
             self.labels, self.records = pickle.load(a)
         timeit.print_time()
         print '... done'
+
         
     def trans_data_type(self, train_prob=0.8):
         print 'trains data ...'
@@ -88,10 +115,20 @@ class Dataset(object):
         return self.trainset, self.validset
 
 
+class Trainer(object):
+    def __init__(self, pk_data_ph):
+        self.dataset = Dataset(pk_data_ph = pk_data_ph)
+
+    def _init(self):
+        self.dataset.fromfile()
+        self.sA = StackedAutoEncoder()
+
+
 
 if __name__ == '__main__':
-    dataset = Dataset('./trainset.csv', './dataset.pk')
-    dataset.load_ori_dataset()
+    dataset = Dataset('./trainset.csv', './norm_float_dataset.pk')
+    #dataset.load_ori_dataset()
+    dataset.load_dataset_to_norm_float()
     dataset.tofile()
     #dataset.fromfile()
     #trainset, validset = dataset.trans_data_type()
