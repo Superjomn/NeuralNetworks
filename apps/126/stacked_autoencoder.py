@@ -6,7 +6,9 @@ Created on Feb 25, 2014
 @mail:  yanchunwei@outlook.com
 '''
 from __future__ import division
-import pickle
+import csv
+import cPickle as pickle
+import time
 import numpy
 import theano
 from theano import tensor as T
@@ -28,28 +30,32 @@ class Dataset(object):
 
     def load_ori_dataset(self):
         print 'load data ...'
-        index = 0
         with open(self.data_ph) as f:
-            while(True):
-                if index == 0:
+            reader = csv.reader(f)
+            for i,ls in enumerate(reader):
+                if i == 0:
                     continue
-                index += 1
-                line = f.readline()
-                if not line: break
-                ls = line.split(',')
+                if i % 1000 == 0:
+                    print '> load\t%d\trecords' % i
                 label = int(ls[0])
                 record = [int(r) for r in ls[1:]]
                 self.records.append(record)
                 self.labels.append(label)
 
     def tofile(self):
+        print '... save data in pickle format'
         dataset = (self.labels, self.records,)
         with open(self.pk_data_ph, 'wb') as f:
             pickle.dump(dataset, f)
 
     def fromfile(self):
+        print '... load dataset from :\t %s' % self.pk_data_ph
+        start_time = time.time()
         with open(self.pk_data_ph, 'rb') as a:
             self.labels, self.records = pickle.load(a)
+        end_time = time.time()
+        print '>used %d seconds' % int(end_time - start_time)
+        print '... done'
         
     def trans_data_type(self, train_prob=0.8):
         print 'trains data ...'
@@ -76,7 +82,9 @@ class Dataset(object):
 
 
 if __name__ == '__main__':
-    dataset = Dataset('./trainset.csv')
-    dataset.load_ori_dataset()
-    dataset.tofile('./dataset.pk')
-
+    dataset = Dataset('./trainset.csv', './dataset.pk')
+    #dataset.load_ori_dataset()
+    #dataset.tofile()
+    dataset.fromfile()
+    trainset, validset = dataset.trans_data_type()
+    print trainset.shape, validset.shape
