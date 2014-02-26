@@ -121,7 +121,21 @@ class Trainer(object):
 
     def _init(self):
         self.dataset.fromfile()
-        self.sA = StackedAutoEncoder()
+        self.trainset, self.validset = self.dataset.trans_data_type()
+        # train the model
+        labels, records = self.trainset
+        n_records, n_features = records.shape
+        self.sA = StackedAutoEncoder(
+            n_visible = n_features,
+            hidden_struct = [300, 100],
+            n_output = 10,
+            corrupt_levels = [0.16, 0.16],
+            learning_rate = 0.01,
+            )
+        self.sA.pretrain(n_iters=4)
+        self.sA.finetune(n_iters=4)
+
+
 
 
 
