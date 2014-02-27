@@ -11,7 +11,8 @@ import theano
 from theano import tensor as T
 
 class AutoEncoder(object):
-    def __init__(self, numpy_rng=None, input=None, n_visible=8, n_hidden=4,
+    def __init__(self, numpy_rng=None, input=None, 
+            n_visible=8, n_hidden=4,
             W=None, bhid=None, bvis=None):
         '''
         :parameters:
@@ -52,6 +53,7 @@ class AutoEncoder(object):
                 value=initial_W, 
                 name='W'
                 )
+
         if not bvis:
             bvis = theano.shared(value=numpy.zeros(n_visible, 
                 dtype=theano.config.floatX),
@@ -69,11 +71,9 @@ class AutoEncoder(object):
         self.W_prime = self.W.T
         self.numpy_rng = numpy_rng
 
-        if input == None:
-            #self.X = T.dmatrix(name='input')
-            self.X = T.fvector(name='X')
-        else:
-            self.X = input
+        self.x = input
+        if not self.x:
+            self.x = T.fvector(name='x')
 
         self.params = [self.W, self.b, self.b_prime]
 
@@ -84,24 +84,26 @@ class AutoEncoder(object):
         return T.nnet.sigmoid(T.dot(hidden, self.W_prime) + self.b_prime)
 
     def get_cost_updates(self, learning_rate):
-        y = self.get_hidden_values(self.X)
+        y = self.get_hidden_values(self.x)
         z = self.get_reconstructed_input(y)
-        #L = - T.sum(self.X * T.log(z) + (1 - self.X) * T.log(1 - z), axis=1)
-        #L = T.sqrt(T.sum( (self.X - z)**2, axis=1))
-        L = T.sqrt(T.sum( (self.X - z)**2)) + 0.01 * T.sum((self.W ** 2))
+        #L = - T.sum(self.x * T.log(z) + (1 - self.x) * T.log(1 - z), axis=1)
+        #L = T.sqrt(T.sum( (self.x - z)**2, axis=1))
+        L = T.sqrt(T.sum( (self.x - z)**2)) + 0.01 * T.sum((self.W ** 2))
         # mean cost of all records
         cost = T.mean(L)
         gparams = T.grad(cost, self.params)
         updates = []
         for param, gparam in zip(self.params, gparams):
-            updates.append((param, param - learning_rate * gparam))
+            update = param - learning_rate * gparam
+            update = T.cast(update, theano.config.floatX)
+            updates.append((param, update))
         return cost, updates
 
     def train(self, data=None, n_iters=1000, learning_rate=0.1):
         n_features, n_items = data.shape
         # compile function
         cost, updates = self.get_cost_updates(learning_rate=0.1)
-        trainer = theano.function([self.X], cost, updates=updates)
+        trainer = theano.function([self.x], cost, updates=updates)
         for i in range(n_iters):
             costs = []
             for j in range(n_items):
@@ -111,38 +113,53 @@ class AutoEncoder(object):
             print i, 'cost', numpy.mean(numpy.array(costs))
 
 
+class BatchAutoEncoder(AutoEncoder):
+    '''
+    a batch version of autoencoder
+    should run much faster using CPU or GPU
+    '''
+    def __init__(self, numpy_rng=None, 
+            input=None, 
+            n_visible=8, n_hidden=4,
+            W=None, bhid=None, bvis=None):
+
+        if not input:
+            input = T.dmatrix(name='x')
+
+        AutoEncoder.__init__(self,
+            numpy_rng = numpy_rng,
+            input = input,
+            n_visible = n_visible,
+            n_hidden = n_hidden,
+            W = W,
+            bhid = bhid,
+            bvis = bvis
+            )
+
+    def train(self, data=None, n_iters=1000, batch_size=3, learning_rate=0.1):
+        n_features, n_items = data.shape
+        n_batchs = int(n_features / batch_size)
+        # compile function
+        cost, updates = self.get_cost_updates(learning_rate=0.1)
+        trainer = theano.function([self.x], cost, updates=updates)
+        for i in range(n_iters):
+            costs = []
+            for j in range(n_batchs):
+                d = data[batch_size * j : batch_size * (j+1)]
+                cost = trainer(d)
+                costs.append(cost)
+            print i, 'cost', numpy.mean(numpy.array(costs).mean())
+
+
 
 
 
 
 if __name__ == "__main__":
     rng = numpy.random
-    def train_all():
-        autoencoder = AutoEncoder(numpy_rng=numpy.random.RandomState(1234), n_visible=60, n_hidden=30)
-        data = rng.randn(400, 60).astype(theano.config.floatX)
-        cost, updates = autoencoder.get_cost_updates(learning_rate=0.1)
-        train = theano.function([autoencoder.X], cost, updates=updates)
-        for i in range(40000):
-            cost = train(data)
-            print i, 'cost', cost
 
-
-    def train_one():
-        autoencoder = AutoEncoder(numpy_rng=numpy.random.RandomState(1234), n_visible=60, n_hidden=30)
-        autoencoder.X = T.vector(name='X', dtype=theano.config.floatX)
-        data = rng.randn(400, 60).astype(theano.config.floatX)
-        cost, updates = autoencoder.get_cost_updates(learning_rate=0.1)
-        train = theano.function([autoencoder.X], cost, updates=updates)
-        for i in range(40000):
-            costs = []
-            for j in range(400):
-                d = data[j]
-                cost = train(d)
-                costs.append(cost)
-            print i, 'cost', numpy.mean(numpy.array(costs))
-
-    autoencoder = AutoEncoder(numpy_rng=numpy.random.RandomState(1234), n_visible=60, n_hidden=30)
-    print 'autoencoder.W', type(autoencoder.W)
+    autoencoder = BatchAutoEncoder(numpy_rng=numpy.random.RandomState(1234), n_visible=60, n_hidden=30)
+    #print 'autoencoder.W', type(autoencoder.W)
     data = rng.randn(400, 60).astype(theano.config.floatX)
 
-    autoencoder.train(data)
+    autoencoder.train(data, batch_size=64, n_iters=100)
