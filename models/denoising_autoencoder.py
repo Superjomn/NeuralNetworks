@@ -42,7 +42,10 @@ class DenoisingAutoEncoder(AutoEncoder):
         if level is None:
             level = self.corrupt_level
 
-        return self.theano_rng.binomial(size=input.shape, n=1, p=1 - level) * input
+        return  self.theano_rng.binomial(
+                size=input.shape, n=1,
+                p=1 - level,
+                dtype=theano.config.floatX) * input
 
     def get_cost_updates(self, learning_rate, corrupt_level=0.1):
         tilde_x = self.get_corrupted_input(self.x, corrupt_level)
@@ -50,9 +53,9 @@ class DenoisingAutoEncoder(AutoEncoder):
         z = self.get_reconstructed_input(y)
         L = - T.sum(self.x * T.log(z) + (1 - self.x) * T.log(1 - z), axis=1)
         L2 = T.mean(T.sqrt(T.sum((self.x - z)**2, axis=1)))
-        cost = L2
-        L2 = L
-        #cost = T.mean(L)
+        #cost = L2
+        #L2 = L
+        cost = T.mean(L)
 
         gparams = T.grad(cost, self.params)
         # generate the list of updates
@@ -65,13 +68,15 @@ class DenoisingAutoEncoder(AutoEncoder):
 
         return (cost, updates, L2)
 
-    def compile_train_fns(self):
-        cost, updates, L2_cost = self.get_cost_updates(learning_rate=0.1)
-
+    def compile_train_fns(self, learning_rate=0.01):
+        cost, updates, L2 = self.get_cost_updates(
+                corruption_level=0.,
+                learning_rate=learning_rate
+            )
         self.trainer = theano.function(
-            [self.x], outputs=[cost, L2_cost], 
-            updates=updates, 
-            allow_input_downcast=True)
+            [self.x],
+            outputs=[cost, L2], 
+            updates=updates)
 
         self.predict = theano.function(
             [self.x],
@@ -81,17 +86,7 @@ class DenoisingAutoEncoder(AutoEncoder):
     
     def train(self, data=None, n_iters=1000, learning_rate=0.1):
         n_features, n_items = data.shape
-        # compile function
-        #c_data = self.get_corrupted_input(self.x, 0.5)
-        #corrupt = theano.function([self.x], c_data)
-        #getx = theano.function([self.x], self.x, allow_input_downcast=True)
-        #print 'original ...'
-        #print getx(data[0])
-        #print getx(data[0]).dtype
-        #print 'corrupt ...'
-        #print corrupt(data[0])
-        #print corrupt(data[0]).dtype
-        trainer, predict = self.compile_train_fns()
+        trainer, predict = self.compile_train_fns(learning_rate)
 
         for i in range(n_iters):
             costs = []
@@ -127,38 +122,40 @@ class BatchDenoisingAutoEncoder(DenoisingAutoEncoder):
             )
 
     def train(self, data=None, batch_size=3, 
-                n_iters=1000, learning_rate=0.1):
+                n_iters=1000, learning_rate=0.01):
 
-        n_features, n_records = data.shape
+        cost, updates, L2 = self.get_cost_updates(
+                corrupt_level = 0.,
+                learning_rate=0.01)
+
+        train_da = theano.function(
+            [self.x],
+            outputs=[cost, L2], 
+            updates=updates)
+
+        n_records = data.shape[0]
         n_batchs = int(n_records / batch_size)
-        # compile function
-        cost, updates, L2_cost= self.get_cost_updates(learning_rate=0.1)
-        trainer = theano.function([self.x], 
-            outputs=[cost, L2_cost],
-            updates=updates, 
-            allow_input_downcast=True
-            )
-        for i in range(n_iters):
+
+        for no in xrange(n_iters):
             costs = []
-            L2_costs = []
-            for j in range(n_batchs):
-                d = data[j * batch_size : (j+1) * batch_size]
-                cost, L2_cost = trainer(d)
-                #print 'cost', cost
-                costs.append(cost.mean())
-                L2_costs.append(L2_cost)
-            print i, 'cost', numpy.array(costs).mean(), numpy.array(L2_costs).mean() / batch_size
+            L2s = []
+            for i in xrange(n_batchs):
+                d = data[i*batch_size : (i+1)*batch_size]
+                cost, L2 = train_da(d)
+                costs.append(cost)
+                L2s.append(L2)
+            print "%d\t%f\t%f" % (no, numpy.array(costs).mean(), numpy.array(L2s).mean())
 
 
 
 
 if __name__ == "__main__":
     rng = numpy.random
-    data = rng.randn(400, 60).astype(theano.config.floatX)
+    data = rng.randn(400, 728).astype(theano.config.floatX)
 
     def test_one():
         auto = DenoisingAutoEncoder(
-            n_visible = 60,
+            n_visible = 728,
             n_hidden = 30,
             )
         auto.train(data,
@@ -167,10 +164,10 @@ if __name__ == "__main__":
     def test_batch():
 
         auto = BatchDenoisingAutoEncoder(
-            n_visible = 60,
-            n_hidden = 30, 
+            n_visible = 728,
+            n_hidden = 300, 
             )
-        auto.train(data, batch_size=40, n_iters=10000)
+        auto.train(data, batch_size=4, n_iters=10000)
 
 
     test_batch()
