@@ -13,16 +13,20 @@ import theano
 from theano import tensor as T
 
 from mlp import HiddenLayer
-from denoising_autoencoder import DenoisingAutoEncoder
-from softmax_regression import SoftmaxRegression
+from denoising_autoencoder import BatchDenoisingAutoEncoder
+from softmax_regression import BatchSoftmaxRegression
 from theano.tensor.shared_randomstreams import RandomStreams
 
 # TODO link learning_rate to each layer
 
 class StackedAutoEncoder(object):
+    '''
+    a batched autoencoder
+    '''
     def __init__(self, numpy_rng=None, theano_rng=None, n_visible=30,
                 hidden_struct=[400, 300], 
-                n_output=10, corrupt_levels=[0.1, 0.1], learning_rate=0.001):
+                n_output=10, corrupt_levels=[0.1, 0.1], learning_rate=0.001,
+            batch_size=4):
         '''
         :parameters:
             hidden_struct: list of ints
@@ -44,10 +48,13 @@ class StackedAutoEncoder(object):
         self.n_output = n_output
         self.corrupt_levels = corrupt_levels
         self.learning_rate = learning_rate
+        self.batch_size = batch_size
         # create variables
+        #self.x = T.fvector('x')
+        #self.y = T.bscalar('y')
         self.x = T.fvector('x')
         self.y = T.bscalar('y')
-        # layer lists
+    # layer lists
         #self.sigmoid_layers = []
         self.dA_layers = []
         self.hidden_layers = []
@@ -77,7 +84,7 @@ class StackedAutoEncoder(object):
 
             # share each hidden layers' parameters 
             # with denoising auto-encoder
-            _dA_layer = DenoisingAutoEncoder(
+            _dA_layer = BatchDenoisingAutoEncoder(
                 numpy_rng = self.numpy_rng,     
                 input = input,
                 n_visible = n_visible,
@@ -90,7 +97,7 @@ class StackedAutoEncoder(object):
             self.dA_layers.append(_dA_layer)
 
         # add a final output layer
-        self.output_layer = SoftmaxRegression(
+        self.output_layer = BatchSoftmaxRegression(
             input = self.hidden_layers[-1].output,
             n_features = self.hidden_struct[-1],
             n_states = self.n_output,
@@ -168,7 +175,7 @@ class StackedAutoEncoder(object):
                 for rid in xrange(n_records):
                     print '> train record:\t%d' % rid
                     x = dataset[rid]
-                    c = pretraining_fns[no]( x) 
+                    c = pretraining_fns[no](x) 
                     costs.append(c)
 
                 print 'pretraining layer %d\tcost\t%f' % (

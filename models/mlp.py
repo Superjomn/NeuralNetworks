@@ -140,6 +140,7 @@ class MultiLayerPerceptron(object):
 
 
 
+
 if __name__ == '__main__':
     x = T.fvector('x')
     mlp = MultiLayerPerceptron(
