@@ -165,9 +165,9 @@ if __name__ == "__main__":
 
         auto = BatchDenoisingAutoEncoder(
             n_visible = 728,
-            n_hidden = 300, 
+            n_hidden = 1000, 
             )
-        auto.train(data, batch_size=4, n_iters=10000)
+        auto.train(data, batch_size=256, n_iters=10000)
 
 
     test_batch()
