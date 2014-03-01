@@ -52,8 +52,9 @@ class StackedAutoEncoder(object):
         # create variables
         #self.x = T.fvector('x')
         #self.y = T.bscalar('y')
-        self.x = T.fvector('x')
-        self.y = T.bscalar('y')
+        self.x = T.fmatrix('x')
+        #self.y = T.bscalar('y')
+        self.y = T.lvector('y')
     # layer lists
         #self.sigmoid_layers = []
         self.dA_layers = []
@@ -123,15 +124,15 @@ class StackedAutoEncoder(object):
         fns = []
         # use autoencoders to encode trainset
         for dA in self.dA_layers:
-            cost, updates = dA.get_cost_updates(
+            cost, updates, L2 = dA.get_cost_updates(
                 self.corrupt_levels[0], self.learning_rate)
 
-            print 'updates:', [ [a.dtype for a in u] for u in updates]
-            print 'hidden_layer.W', dA.W.dtype
+            #print 'updates:', [ [a.dtype for a in u] for u in updates]
+            #print 'hidden_layer.W', dA.W.dtype
             # create function link
             fn = theano.function(
                 inputs = [self.x],
-                outputs = cost,
+                outputs = L2,
                 updates = updates,
                 allow_input_downcast=True,
                 )
@@ -159,22 +160,25 @@ class StackedAutoEncoder(object):
             )
         return train_fn, predict_fn
 
-    def pretrain(self, dataset, n_iters=3):
+    def pretrain(self, dataset, n_iters=3, batch_size=4):
 
         pretraining_fns = self.compile_pretrain_funcs()
         # finetune functions
         #ft_train_fn, ft_predict_fn = self.compile_finetune_funcs()
 
         print 'pretraining ...'
-        ### pretraining
         n_records = dataset.shape[0]
+        n_batches = int(n_records / batch_size)
+        ### pretraining
 
         for no in xrange(self.n_layers):
             for t in xrange(n_iters):
                 costs = []
-                for rid in xrange(n_records):
-                    print '> train record:\t%d' % rid
-                    x = dataset[rid]
+                for rid in xrange(n_batches):
+                    x = dataset[rid * batch_size: (rid+1) * batch_size]
+                    #print 'x', x
+                    #print '> train record:\t%d' % rid
+                    #x = dataset[rid]
                     c = pretraining_fns[no](x) 
                     costs.append(c)
 
@@ -215,6 +219,6 @@ if __name__ == "__main__":
     labels = numpy_rng.randint(size=400, low=0, high=5).astype(theano.config.floatX)
 
     #stacked_autoencoder.init_layers()
-    stacked_autoencoder.pretrain(data, n_iters=20)
-    stacked_autoencoder.finetune(data, labels, n_iters=20)
+    stacked_autoencoder.pretrain(data, n_iters=4, batch_size=8)
+    stacked_autoencoder.finetune(data, labels, n_iters=4)
 

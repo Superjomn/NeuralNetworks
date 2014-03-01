@@ -51,11 +51,12 @@ class DenoisingAutoEncoder(AutoEncoder):
         tilde_x = self.get_corrupted_input(self.x, corrupt_level)
         y = self.get_hidden_values(tilde_x)
         z = self.get_reconstructed_input(y)
-        L = - T.sum(self.x * T.log(z) + (1 - self.x) * T.log(1 - z), axis=1)
+        #L = - T.sum(self.x * T.log(z) + (1 - self.x) * T.log(1 - z), axis=1)
+        L = -T.sum(self.x * T.log(z) + (1 - self.x) * T.log(1 - z), axis=1)
         L2 = T.mean(T.sqrt(T.sum((self.x - z)**2, axis=1)))
-        #cost = L2
+        cost = L2
         #L2 = L
-        cost = T.mean(L)
+        #cost = T.mean(L)
 
         gparams = T.grad(cost, self.params)
         # generate the list of updates
