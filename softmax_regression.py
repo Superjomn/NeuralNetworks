@@ -39,7 +39,8 @@ class SoftmaxRegression(object):
         #self.y.tag.test_value = 3
         #self.y = T.cast(y, 'int32')
         
-        self.b = theano.shared(numpy.zeros((n_states)),
+        self.b = theano.shared(numpy.zeros((n_states),
+            dtype=theano.config.floatX),
             name = 'b',
             borrow = True,
             )

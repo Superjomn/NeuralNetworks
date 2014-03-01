@@ -76,9 +76,6 @@ class StackedAutoEncoder(object):
                 n_visible = n_visible,
                 n_output = self.hidden_struct[no],
                 activation = T.nnet.sigmoid)
-            print 'hidden_layer.parameters:'
-            print 'W', type(hidden_layer.W)
-            print 'b', type(hidden_layer.b)
             self.hidden_layers.append(hidden_layer)
             
             self.params += hidden_layer.params
@@ -145,8 +142,11 @@ class StackedAutoEncoder(object):
         # updates
         updates = []
         for param, gparam in zip(self.params, gparams):
+            update = T.cast(
+                param - gparam * self.learning_rate,
+                theano.config.floatX)
             updates.append(
-                (param, param - gparam * self.learning_rate))
+                (param, update))
 
         train_fn = theano.function(
             inputs = [self.x, self.y],
@@ -187,7 +187,7 @@ class StackedAutoEncoder(object):
                         )
             
 
-    def finetune(self, records, labels, n_iters=5):
+    def finetune(self, records, labels, n_iters=5, batch_size=4):
         '''
         '''
         print '... finetunning the model'
@@ -195,10 +195,11 @@ class StackedAutoEncoder(object):
         # best parameters and stop training
         train_fn, predict_fn = self.compile_finetune_funcs()
         n_records = records.shape[0]
+        n_batches = int(n_records / batch_size)
         costs = []
         for t in xrange(n_iters):
-            for i in xrange(n_records):
-                x, y = records[i], labels[i]
+            for i in xrange(n_batches):
+                x, y = records[i*batch_size: (i+1)*batch_size], labels[i*batch_size: (i+1)*batch_size]
                 cost = train_fn(x, y)
                 costs.append(cost)
             print 'fineture error:\t%f' % numpy.array(costs).mean()
@@ -208,17 +209,19 @@ class StackedAutoEncoder(object):
 
 if __name__ == "__main__":
     stacked_autoencoder = StackedAutoEncoder(
-        n_visible = 30,
-        hidden_struct = [20, 10],
-        n_output = 5,
+        n_visible = 725,
+        hidden_struct = [1000, 400],
+        n_output = 10,
         learning_rate = 0.01,
             )
 
     numpy_rng=numpy.random.RandomState(1234)
-    data = numpy_rng.randn(400, 30).astype(theano.config.floatX)
-    labels = numpy_rng.randint(size=400, low=0, high=5).astype(theano.config.floatX)
+    data = numpy_rng.randn(400, 725).astype(theano.config.floatX)
+    labels = numpy_rng.randint(size=400, low=0, high=10)
 
-    #stacked_autoencoder.init_layers()
-    stacked_autoencoder.pretrain(data, n_iters=4, batch_size=8)
-    stacked_autoencoder.finetune(data, labels, n_iters=4)
+    for i in range(60):
+        print 'turn:', i
+        #stacked_autoencoder.init_layers()
+        stacked_autoencoder.pretrain(data, n_iters=1000, batch_size=300)
+        stacked_autoencoder.finetune(data, labels, n_iters=500, batch_size=300)
 
