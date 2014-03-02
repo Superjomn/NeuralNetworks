@@ -155,8 +155,8 @@ class StackedAutoEncoder(object):
             )
 
         predict_fn = theano.function(
-            inputs = [self.x, self.y],
-            outputs = self.fineture_cost
+            inputs = [self.x],
+            outputs = T.argmax(self.output_layer.p_y_given_x, axis=1)
             )
         return train_fn, predict_fn
 
@@ -182,8 +182,8 @@ class StackedAutoEncoder(object):
                     c = pretraining_fns[no](x) 
                     costs.append(c)
 
-                print 'pretraining layer %d\tcost\t%f' % (
-                            no, numpy.array(costs).mean()
+                print 'pretraining l %d\t%d\tcost\t%f' % (
+                            no, t, numpy.array(costs).mean()
                         )
             
 
@@ -203,6 +203,8 @@ class StackedAutoEncoder(object):
                 cost = train_fn(x, y)
                 costs.append(cost)
             print 'fineture error:\t%f' % numpy.array(costs).mean()
+            print 'target:', y
+            print 'predict:', predict_fn(x)
 
 
 
@@ -222,6 +224,6 @@ if __name__ == "__main__":
     for i in range(60):
         print 'turn:', i
         #stacked_autoencoder.init_layers()
-        stacked_autoencoder.pretrain(data, n_iters=1000, batch_size=300)
-        stacked_autoencoder.finetune(data, labels, n_iters=500, batch_size=300)
+        stacked_autoencoder.pretrain(data, n_iters=100, batch_size=300)
+        stacked_autoencoder.finetune(data, labels, n_iters=500, batch_size=10)
 

@@ -134,7 +134,12 @@ class SoftmaxRegression(object):
             allow_input_downcast=True,
             outputs = cost)
 
-        return train_model
+        predict_model = theano.function(
+            inputs = [self.x],
+            outputs = T.argmax(self.p_y_given_x, axis=1),
+            )
+
+        return train_model, predict_model
 
 
 
@@ -183,7 +188,7 @@ class BatchSoftmaxRegression(SoftmaxRegression):
 
 
     def train(self, set_x, set_y, batch_size=3, n_iters=1000):
-        train_model = self.compile_train_fn()
+        train_model, predict_model = self.compile_train_fn()
 
         n_records = set_x.shape[0]
 
@@ -197,6 +202,9 @@ class BatchSoftmaxRegression(SoftmaxRegression):
                 #print 'x', x
                 #print 'y', y
                 cost = train_model(x, y)
+                y_pred = predict_model(x)
+                print 'y\t', y
+                print 'y_pred\t', y_pred
                 costs.append(cost.mean())
             c = numpy.array(costs).mean()
             print no, c
@@ -218,8 +226,8 @@ if __name__ == "__main__":
         s = BatchSoftmaxRegression(
             n_features=30)
 
-        s.train(x_set, y_set, n_iters=4, 
-                batch_size=32
+        s.train(x_set, y_set, n_iters=4000, 
+                batch_size=6
             )
 
     test_batch()
