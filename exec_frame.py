@@ -33,14 +33,31 @@ class BaseModel(object):
         '''
         raise NotImplemented
 
+    def get_model(self):
+        '''
+        get the model to save to file
+        should contain the parameters without dataset
+        '''
+        return self
+
 
 
 class WindowCosts(object):
     def __init__(self, space=10):
         self.space = space
         self.costs = []
+        self.last_mean = -1
+        # times of update cost
+        self._index = -1
+        # index of last window
+        self._last_record_index = -1
 
     def add(self, cost):
+        self._index += 1
+        if self._index - self._last_record_index >= self.space:
+            self.last_mean = self.mean()
+            self._last_record_index = self._index
+
         if len(self.costs) >= self.space:
             del self.costs[0]
         self.costs.append(cost)
@@ -68,17 +85,16 @@ class ExecStatus(object):
         '''
         self.window = window
         self.tolerance = tolerance
-        self.model_root = model_root
         # cost of last window
         self.last_window_cost = None
-        self.latest_window = WindowErrors()
+        self.cur_window = WindowCosts(space=window)
 
     def update_cost(self, cost):
-        self.latest_window.add(cost)
-        last_mean = self.latest_window.mean()
+        self.cur_window.add(cost)
 
     def continue_run(self):
-        return last_mean - self.last_cost > self.tolerance
+        return self.cur_window.last_mean - self.cur_window.mean()  > self.tolerance 
+
 
 
 class ExecFrame(object):
@@ -101,6 +117,7 @@ class ExecFrame(object):
         self.n_step2save = n_step2save
         self.window = window
         self.tolerance = tolerance
+        self.model_root = model_root
         # init
         self.exec_status = ExecStatus(
             n_iters = n_iters,
@@ -110,19 +127,24 @@ class ExecFrame(object):
 
     def run(self):
         self.iter_index = 0
-        for self.iter_index in xrange(self.n_iters):
-            cost = self.model.train_iter()
-            self.exec_status.add(cost)
-            if not self.exec_status.continue_run():
+        #for self.iter_index in xrange(self.n_iters):
+        while True:
+            self.iter_index += 1
+            print 'iter:\t', self.iter_index
+            self.last_cost = self.model.train_iter()
+            self.exec_status.update_cost(self.last_cost)
+            if (not self.exec_status.continue_run()) and self.iter_index > self.n_iters:
+                print 'interation break!'
                 self.save_model()
+                break
             elif self.iter_index % self.n_step2save == 0:
                 self.save_model()
-            self.last_cost = cost
+        print 'end ...'
 
     def save_model(self):
         name = os.path.join(
                 self.model_root, 
-                "%d-%f.pk" % (self.index, self.last_cost)
+                "%d-%f.pk" % (self.iter_index, self.last_cost)
             )
         with open(name, 'wb') as f:
             print 'save model to\t', name

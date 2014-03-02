@@ -16,6 +16,7 @@ theano.config.compute_test_value = 'off'
 #theano.config.device = 'cpu'
 theano.config.floatX = 'float32'
 theano.config.mode = 'FAST_COMPILE'
+from exec_frame import ExecFrame, BaseModel
 
 
 class SoftmaxRegression(object):
@@ -211,9 +212,94 @@ class BatchSoftmaxRegression(SoftmaxRegression):
 
 
 
+class _BatchSoftmaxRegression(BaseModel):
+    '''
+    a softmax regression class implements BaseModel interfaces
+    '''
+    def __init__(self, 
+            input=None, output=None, 
+            n_features=500, n_states=10, learning_rate=0.01,
+            # exec paramters
+            trainset=None, 
+            batch_size = 400): 
+
+        self.model = BatchSoftmaxRegression(
+                input=input, 
+                output=output, 
+                n_features=n_features, 
+                n_states=n_states, 
+                learning_rate=learning_rate)
+
+        self.trainset = trainset
+        self.batch_size = batch_size
+        # init
+        self._train_fn = None
+        self._predict_fn = None
+
+    def train_iter(self):
+        records, labels = self.trainset
+        if not self._train_fn:
+            self._train_fn, self._predict_fn = self.model.compile_train_fn()
+        n_records = records.shape[0]
+
+        n_batchs = int(n_records / self.batch_size)
+        costs = []
+        for i in xrange(n_batchs):
+            x = records[ i*self.batch_size : (i+1) * self.batch_size]
+            y = labels[ i*self.batch_size : (i+1) * self.batch_size]
+            #print 'x', x
+            #print 'y', y
+            cost = self._train_fn(x, y)
+            #y_pred = self._predict_fn(x)
+            #print 'y\t', y
+            #print 'y_pred\t', y_pred
+            costs.append(cost.mean())
+        c = numpy.array(costs).mean()
+        print  c
+        return c
+
+    def predict(self, x):
+        if not self._predict_fn:
+            self._train_fn, self._predict_fn = self.model.compile_train_fn()
+        return self._predict_fn(x)
+
+    def get_model(self):
+        return self.model
+
+
+
+class _Exec(ExecFrame):
+    def __init__(self, model_root="", 
+            n_iters=1000, n_step2save=100,
+            dataset=None,
+            window=5, tolerance=0.005):
+
+        #x_set = rng.randn(50, 30).astype(theano.config.floatX)
+        #y_set = rng.randint(size=50, low=0, high=10).astype(theano.config.floatX)
+
+        model = _BatchSoftmaxRegression(
+            trainset = dataset,
+            batch_size = 40,
+            n_features=30, n_states=10,
+            )
+
+        ExecFrame.__init__(self,
+            model = model,
+            model_root = model_root,
+            n_iters = n_iters,
+            n_step2save = n_step2save,
+            window = window,
+            tolerance = tolerance
+            )
+
+
+
+
+
+
 if __name__ == "__main__":
-    x_set = rng.randn(50, 30).astype(theano.config.floatX)
-    y_set = rng.randint(size=50, low=0, high=10).astype(theano.config.floatX)
+    x_set = rng.randn(500, 30).astype(theano.config.floatX)
+    y_set = rng.randint(size=500, low=0, high=10).astype(theano.config.floatX)
 
     def test_softmax_regression():
         s = SoftmaxRegression(
@@ -230,6 +316,15 @@ if __name__ == "__main__":
                 batch_size=6
             )
 
-    test_batch()
+    #test_batch()
+    _exec = _Exec(
+        n_iters = 100,
+        tolerance = 0.000001,
+        model_root = "_models",
+        n_step2save = 100,
+        dataset=(x_set, y_set,),
+        window=16,
+        )
+    _exec.run()
 
 
