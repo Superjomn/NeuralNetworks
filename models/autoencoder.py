@@ -10,9 +10,18 @@ import numpy
 import theano
 from theano import tensor as T
 
+def kl_divergence(p, p_hat):
+    term1 = p * T.log(p)
+    term2 = p * T.log(p_hat)
+    term3 = (1-p) * T.log(1 - p)
+    term4 = (1-p) * T.log(1 - p_hat)
+    return term1 - term2 + term3 - term4
+
+
 class AutoEncoder(object):
     def __init__(self, numpy_rng=None, input=None, 
             n_visible=8, n_hidden=4,
+            sparsity=0.05, beta=0.001,
             W=None, bhid=None, bvis=None):
         '''
         :parameters:
@@ -35,6 +44,10 @@ class AutoEncoder(object):
 
         bvis: vector
             visible bias
+
+        sparsity: sparsity parameter
+
+        beta: sparsity weight
         '''
         self.n_visible = n_visible
         self.n_hidden = n_hidden
@@ -70,6 +83,9 @@ class AutoEncoder(object):
         self.b_prime = bvis
         self.W_prime = self.W.T
         self.numpy_rng = numpy_rng
+        # sparsity
+        self.sparsity = sparsity
+        self.beta = beta
 
         self.x = input
         if not self.x:
@@ -83,6 +99,12 @@ class AutoEncoder(object):
     def get_reconstructed_input(self, hidden):
         return T.nnet.sigmoid(T.dot(hidden, self.W_prime) + self.b_prime)
 
+    def get_sparty_cost(self, activations):
+        sparsity_level = T.extra_ops.repeat(self.sparsity, self.n_hidden)
+        ave_act = activations.mean(axis=0)
+        kl_div = kl_divergence(sparsity_level, ave_act)
+        return kl_div.sum() * self.beta
+
     def get_cost_updates(self, learning_rate):
         y = self.get_hidden_values(self.x)
         z = self.get_reconstructed_input(y)
@@ -90,7 +112,12 @@ class AutoEncoder(object):
         #L = T.sqrt(T.sum( (self.x - z)**2, axis=1))
         L = T.sqrt(T.sum( (self.x - z)**2)) + 0.01 * T.sum((self.W ** 2))
         # mean cost of all records
-        cost = T.mean(L)
+        #sparcity_cost = y 
+        cost = T.mean(L) 
+        # add sparcity
+        if self.sparsity != 0.0:
+            cost += self.get_sparty_cost(y)
+
         gparams = T.grad(cost, self.params)
         updates = []
         for param, gparam in zip(self.params, gparams):
@@ -121,7 +148,9 @@ class BatchAutoEncoder(AutoEncoder):
     def __init__(self, numpy_rng=None, 
             input=None, 
             n_visible=8, n_hidden=4,
-            W=None, bhid=None, bvis=None):
+            W=None, bhid=None, bvis=None,
+            sparsity=0.05, beta=0.001,
+            ):
 
         if not input:
             input = T.dmatrix(name='x')
@@ -133,7 +162,9 @@ class BatchAutoEncoder(AutoEncoder):
             n_hidden = n_hidden,
             W = W,
             bhid = bhid,
-            bvis = bvis
+            bvis = bvis,
+            sparsity = sparsity,
+            beta = beta,
             )
 
     def train(self, data=None, n_iters=1000, batch_size=3, learning_rate=0.1):
@@ -149,9 +180,6 @@ class BatchAutoEncoder(AutoEncoder):
                 cost = trainer(d)
                 costs.append(cost)
             print i, 'cost', numpy.mean(numpy.array(costs).mean())
-
-
-
 
 
 

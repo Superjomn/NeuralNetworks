@@ -126,9 +126,12 @@ class ExecFrame(object):
             window = window,
             tolerance = tolerance
             )
+        # the current turn id
+        self.times = -1
 
     def run(self):
         self.iter_index = 0
+        self.times += 1
         #for self.iter_index in xrange(self.n_iters):
         while True:
             self.iter_index += 1
@@ -148,7 +151,7 @@ class ExecFrame(object):
             return
         name = os.path.join(
                 self.model_root, 
-                "%d-%f.pk" % (self.iter_index, self.last_cost)
+                "^d-%d-%f.pk" % (self.times, self.iter_index, self.last_cost)
             )
         with open(name, 'wb') as f:
             print 'save model to\t', name

@@ -65,7 +65,7 @@ class Validator(object):
             x = records[i:i+1]
             #print 'x:', x
             y = self.predict_fn(x)[0]
-            print 'y:', y, labels[i]
+            #print 'y:', y, labels[i]
             res.append(y)
         return res
 
@@ -83,6 +83,7 @@ class Validator(object):
         #num = len(filter(lambda x:x, res == labels))
         print 'num', num
         c_rate = num/n_records
+        print 'Correct rate:', c_rate
         print 'Error rate:', 1 - c_rate
         return c_rate
 

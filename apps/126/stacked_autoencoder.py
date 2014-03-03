@@ -178,10 +178,10 @@ class Trainer(object):
 
         self.sA = StackedAutoEncoder(
             n_visible = n_features,
-            hidden_struct = [1000, 600, 200],
+            hidden_struct = [600, 200],
             n_output = 10,
             corrupt_levels = [0.03, 0.03],
-            learning_rate = 0.01,
+            learning_rate = 0.02,
             )
 
     def _init_exec(self):
@@ -195,17 +195,17 @@ class Trainer(object):
                 n_iters = 800,
                 dataset = self.trainset,
                 window = 10,
-                tolerance = 0.001,
+                tolerance = 0.002,
                 )
             self.hidden_layer_execs.append(_exec)
         # for output layer
         _exec = _FinetuneLayerExec(
             model = self.sA,
-            model_root = '_models/3_1000_600_200_001/',
+            model_root = '_models/2_600_200_002_sparcity/',
             window = 10,
             n_iters = 800,
             dataset = self.trainset,
-            tolerance = 0.001,
+            tolerance = 0.02,
             batch_size = 400,
             )
         self.output_layer_exec = _exec
@@ -221,7 +221,7 @@ class Trainer(object):
         sys.stdout.write("begin to output...")
         records, labels = self.trainset
         timeit = Timeit(time.time())
-        for i in range(8):
+        for i in range(4):
 
             self._pretrain()
 
