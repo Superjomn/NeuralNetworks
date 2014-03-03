@@ -6,8 +6,10 @@ Created on March 3, 2014
 @author: Chunwei Yan @ PKU
 @mail:  yanchunwei@outlook.com
 '''
+from __future__ import division
 import sys
 import theano
+import numpy
 from theano import scalar as T
 import cPickle as pickle
 import argparse
@@ -50,6 +52,7 @@ class Validator(object):
     def __init__(self, dataset, model):
         self.dataset = dataset
         self.model = model
+        self._init()
 
     def _init(self):
         train_fn, self.predict_fn = self.model.compile_finetune_funcs()
@@ -59,18 +62,28 @@ class Validator(object):
         records,labels = self.dataset
         n_records = records.shape[0]
         for i in range(n_records):
-            x = records[i]
-            y = self.predict_fn(x)
-        res.append(y)
+            x = records[i:i+1]
+            #print 'x:', x
+            y = self.predict_fn(x)[0]
+            print 'y:', y, labels[i]
+            res.append(y)
         return res
 
     def validate(self):
         records,labels = self.dataset
+        labels = list(labels)
         n_records = records.shape[0]
         res = self.predict()
-        num = len(filter(lambda x:x, res == labels))
+        num = 0
+        #print 'labels', labels
+        print 'len res labels', len(res), len(labels)
+        for i in xrange(n_records):
+            if res[i] == labels[i]:
+                num += 1.0
+        #num = len(filter(lambda x:x, res == labels))
+        print 'num', num
         c_rate = num/n_records
-        print 'Correct rate:', c_rate
+        print 'Error rate:', 1 - c_rate
         return c_rate
 
 
