@@ -100,6 +100,7 @@ class ExecStatus(object):
 class ExecFrame(object):
     '''
     a execution framework
+    用于检测model是否停止迭代
     '''
     def __init__(self, model, model_root="", n_iters=1000, n_step2save=100,
             window=5, tolerance=0.03):
@@ -108,6 +109,7 @@ class ExecFrame(object):
 
         n_step2save: int
             save model to pickle files every <n_step2save> steps
+            if n_step2save == -1: do not save the model
 
         model_root: string
             root of model files to save
@@ -142,19 +144,23 @@ class ExecFrame(object):
         print 'end ...'
 
     def save_model(self):
+        if self.n_step2save == -1:
+            return
         name = os.path.join(
                 self.model_root, 
                 "%d-%f.pk" % (self.iter_index, self.last_cost)
             )
         with open(name, 'wb') as f:
             print 'save model to\t', name
-            pk.dump(self.model, f)
+            pk.dump(self.model.get_model(), f)
             
 
+    '''
     def load_model_from_file(self, path):
         with open(path, 'rb') as f:
             print 'load model from\t', path
             self.model = pk.load(f)
+    '''
 
 
 

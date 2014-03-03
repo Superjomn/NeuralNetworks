@@ -77,6 +77,24 @@ class Dataset(object):
         self.records = numpy.array(self.records).astype(theano.config.floatX)
         timeit.print_time()
 
+    def load_records_to_norm_float(self):
+        print 'load data ...'
+        timeit = Timeit()
+        with open(self.data_ph) as f:
+            reader = csv.reader(f)
+            for i,ls in enumerate(reader):
+                if i == 0:
+                    continue
+                if i % 1000 == 0:
+                    print '> load\t%d\trecords' % i
+                record = [int(r)/N_PIXEL_VALUES for r in ls]
+                self.records.append(record)
+
+        self.records = numpy.array(self.records).astype(theano.config.floatX)
+        timeit.print_time()
+        return self.records
+
+
 
     def tofile(self):
         print '... save data in pickle format'
