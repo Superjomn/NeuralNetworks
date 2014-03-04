@@ -16,13 +16,16 @@ from autoencoder import AutoEncoder
 class DenoisingAutoEncoder(AutoEncoder):
     def __init__(self, numpy_rng=None, input=None, n_visible=8, n_hidden=4,
             corrupt_level=0.0,
-            W=None, bhid=None, bvis=None, theano_rng=None):
+            W=None, bhid=None, bvis=None, theano_rng=None,
+            sparsity=0.05, beta=0.001):
 
         AutoEncoder.__init__(self, 
             numpy_rng=numpy_rng,
             input = input, 
             n_visible = n_visible,
             n_hidden = n_hidden,
+            sparsity = sparsity,
+            beta = beta,
             W = W,
             bhid = bhid,
             bvis = bvis
@@ -105,6 +108,8 @@ class DenoisingAutoEncoder(AutoEncoder):
 
 class BatchDenoisingAutoEncoder(DenoisingAutoEncoder):
     def __init__(self, numpy_rng=None, input=None, n_visible=8, n_hidden=4,
+            beta = 0.001,
+            sparsity = 0.05,
             corrupt_level=0.0,
             W=None, bhid=None, bvis=None, theano_rng=None):
 
@@ -118,6 +123,8 @@ class BatchDenoisingAutoEncoder(DenoisingAutoEncoder):
             n_hidden = n_hidden,
             corrupt_level = corrupt_level,
             W = W,
+            beta = beta,
+            sparsity = sparsity,
             bhid = bhid, bvis = bvis,
             theano_rng = theano_rng
             )

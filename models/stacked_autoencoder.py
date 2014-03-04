@@ -26,7 +26,10 @@ class StackedAutoEncoder(object):
     def __init__(self, numpy_rng=None, theano_rng=None, n_visible=30,
                 hidden_struct=[400, 300], 
                 n_output=10, corrupt_levels=[0.1, 0.1], learning_rate=0.001,
-            batch_size=4):
+            batch_size=4,
+            beta = 0.001,
+            sparsity = 0.05,
+            ):
         '''
         :parameters:
             hidden_struct: list of ints
@@ -49,6 +52,8 @@ class StackedAutoEncoder(object):
         self.corrupt_levels = corrupt_levels
         self.learning_rate = learning_rate
         self.batch_size = batch_size
+        self.beta = beta
+        self.sparsity = sparsity
         # create variables
         #self.x = T.fvector('x')
         #self.y = T.bscalar('y')
@@ -62,6 +67,7 @@ class StackedAutoEncoder(object):
         self.params = []
 
         self._init_layers()
+
 
     def _init_layers(self):
         for no in xrange(self.n_layers):
@@ -92,7 +98,9 @@ class StackedAutoEncoder(object):
                 # TODO something wrong?
                 corrupt_level = self.corrupt_levels[no],
                 W = hidden_layer.W,
-                bhid = hidden_layer.b
+                bhid = hidden_layer.b,
+                beta = self.beta,
+                sparsity = self.sparsity,
                 )
             self.dA_layers.append(_dA_layer)
 
