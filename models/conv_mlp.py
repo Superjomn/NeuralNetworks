@@ -127,18 +127,30 @@ class ConvMLP(object):
             )
         return train_model
 
+    def compile_predict_fn(self):
+        y = T.argmax(self.layers[-1].p_y_given_x, axis=1),
+        predict_fn = theano.function([self.x], y)
+        return predict_fn
+
     def train(self, dataset, n_iters):
         records, labels = dataset
         n_records = records.shape[0]
         n_batches = int(n_records / self.batch_size)
         train_fn = self.compile_train_fn()
-        for no in xrange(n_batches):
+        #predict_fn = self.compile_predict_fn()
+
+        for no in xrange(n_iters):
             costs = []
-            for i in xrange(n_records):
+            for i in xrange(n_batches):
                 x = records[i*self.batch_size: (i+1)*self.batch_size]
                 y = labels[i*self.batch_size: (i+1)*self.batch_size]
                 if not len(x) > 1:
                     continue
+
+                #y_pred = predict_fn(x)
+                #print 'y\t', y
+                #print 'y_pred\t', y_pred
+
                 cost = train_fn(x, y)
                 costs.append(cost)
             c = numpy.mean(costs)
