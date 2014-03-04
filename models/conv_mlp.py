@@ -114,8 +114,9 @@ class ConvMLP(object):
         grads = T.grad(cost, params)
         updates = []
         for param, grad in zip(params, grads):
+            update = param - self.learning_rate * grad
             updates.append(
-                (param, grad,))
+                (param, update,))
         return updates
 
     def compile_train_fn(self):
