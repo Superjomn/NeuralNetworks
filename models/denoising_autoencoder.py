@@ -47,7 +47,7 @@ class DenoisingAutoEncoder(AutoEncoder):
                 p=1 - level,
                 dtype=theano.config.floatX) * input
 
-    def get_cost_updates(self, learning_rate, corrupt_level=0.1):
+    def get_cost_updates(self, learning_rate, corrupt_level=None):
         tilde_x = self.get_corrupted_input(self.x, corrupt_level)
         y = self.get_hidden_values(tilde_x)
         z = self.get_reconstructed_input(y)

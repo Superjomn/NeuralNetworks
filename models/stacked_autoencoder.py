@@ -70,6 +70,8 @@ class StackedAutoEncoder(object):
             input = self.x if no == 0 else\
                     self.hidden_layers[no-1].output
             # create a hidden layer
+            print 'no', no
+            print 'hidden_struct', self.hidden_struct
             hidden_layer = HiddenLayer(
                 rng = self.numpy_rng,
                 input = input,
@@ -88,7 +90,7 @@ class StackedAutoEncoder(object):
                 n_visible = n_visible,
                 n_hidden = self.hidden_struct[no],
                 # TODO something wrong?
-                corrupt_level = self.corrupt_levels[0],
+                corrupt_level = self.corrupt_levels[no],
                 W = hidden_layer.W,
                 bhid = hidden_layer.b
                 )
@@ -122,7 +124,8 @@ class StackedAutoEncoder(object):
         # use autoencoders to encode trainset
         for dA in self.dA_layers:
             cost, updates, L2 = dA.get_cost_updates(
-                self.corrupt_levels[0], self.learning_rate)
+                 learning_rate = self.learning_rate
+                 )
 
             #print 'updates:', [ [a.dtype for a in u] for u in updates]
             #print 'hidden_layer.W', dA.W.dtype

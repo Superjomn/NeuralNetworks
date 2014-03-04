@@ -102,7 +102,7 @@ class ExecFrame(object):
     a execution framework
     用于检测model是否停止迭代
     '''
-    def __init__(self, model, model_root="", n_iters=1000, n_step2save=100,
+    def __init__(self, model, model_root="", n_iters=1000, n_step2save=250,
             window=5, tolerance=0.03):
         '''
         model: object
@@ -128,8 +128,11 @@ class ExecFrame(object):
             )
         # the current turn id
         self.times = -1
+        self.father = None
 
-    def run(self):
+    def run(self, father=None):
+        # to get validate cost
+        self.father = father
         self.iter_index = 0
         self.times += 1
         #for self.iter_index in xrange(self.n_iters):
@@ -149,10 +152,18 @@ class ExecFrame(object):
     def save_model(self):
         if self.n_step2save == -1:
             return
-        name = os.path.join(
-                self.model_root, 
-                "^d-%d-%f.pk" % (self.times, self.iter_index, self.last_cost)
-            )
+            name = os.path.join(
+                    self.model_root, 
+                    "%d-%d-%f.pk" % (self.times, self.iter_index, self.last_cost)
+                )
+        else:
+            # the last float is validation's correct rate
+            c_rate = self.father.cur_c_rate
+            name = os.path.join(
+                    self.model_root, 
+                    "%d-%d-%f-%f.pk" % (self.times, self.iter_index, self.last_cost, c_rate)
+                )
+
         with open(name, 'wb') as f:
             print 'save model to\t', name
             pk.dump(self.model.get_model(), f)

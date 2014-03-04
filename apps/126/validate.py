@@ -76,12 +76,12 @@ class Validator(object):
         res = self.predict()
         num = 0
         #print 'labels', labels
-        print 'len res labels', len(res), len(labels)
+        #print 'len res labels', len(res), len(labels)
         for i in xrange(n_records):
             if res[i] == labels[i]:
                 num += 1.0
         #num = len(filter(lambda x:x, res == labels))
-        print 'num', num
+        #print 'num', num
         c_rate = num/n_records
         print 'Correct rate:', c_rate
         print 'Error rate:', 1 - c_rate

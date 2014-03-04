@@ -24,6 +24,7 @@ class HiddenLayer(object):
             rng = numpy.random.RandomState(1234)
 
         self.rng = rng
+        #print 'n_output, n_visible', n_output, n_visible
 
         if not W:
             initial_W = numpy.asarray(
