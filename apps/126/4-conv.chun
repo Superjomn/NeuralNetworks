@@ -1,0 +1,182 @@
+#!/usr/bin/python2.7
+# -*- coding: utf-8 -*-
+'''
+Created on March 05, 2014
+
+@author: Chunwei Yan @ PKU
+@mail:  yanchunwei@outlook.com
+'''
+from __future__ import division
+import sys
+sys.path.append('..')
+sys.path.append('../../')
+import time
+from utils import Timeit
+from dataset import *
+from models.conv_mlp import ConvMLP
+from exec_frame import ExecFrame, BaseModel
+from validate import load_dataset as load_valid_dataset, Validator
+
+class _ConvMLP(BaseModel):
+    def __init__(self, model, trainset, batch_size=80):
+        self.model = model
+        self.trainset = trainset
+        self.batch_size = batch_size
+        self.train_fn = None
+
+    def train_iter(self):
+        records, labels = self.trainset
+        n_records = records.shape[0]
+        n_batches = int(n_records / self.batch_size)
+        costs = []
+        if not self.train_fn:
+            self.train_fn = self.model.compile_train_fn()
+        for i in xrange(n_batches):
+            x = records[i*self.batch_size: (i+1)*self.batch_size]
+            x_size = x.shape[0]
+
+            if x_size < self.batch_size:
+                x = records[-self.batch_size:]
+                y = labels[-self.batch_size:]
+            else:
+                y = labels[i*self.batch_size: (i+1)*self.batch_size]
+            #y_pred = predict_fn(x)
+            #print 'y\t', y
+            #print 'y_pred\t', y_pred
+
+            cost = self.train_fn(x, y)
+            costs.append(cost)
+        c = numpy.mean(costs)
+        print 'cost\t%f' % c
+        return c
+
+    def get_model(self):
+        return self.model
+
+class ConvExec(ExecFrame):
+    def __init__(self, model,
+            batch_size=40,
+            model_root="", 
+            n_iters=1000,
+            dataset=None,
+            window=5, tolerance=0.005):
+
+        _model = _ConvMLP(
+                model = model,
+                trainset = dataset,
+                batch_size = batch_size,
+                )
+
+        ExecFrame.__init__(self,
+            model = _model,
+            model_root = model_root,
+            n_iters = n_iters,
+            n_step2save = 100,
+            window = window,
+            tolerance = tolerance
+            )
+
+    def continue_turn(self):
+        if not self.validtor:
+            self.valid_set = load_valid_dataset('data/valid-0.780000.pk')
+            self.validtor = Validator(
+                self.valid_set,
+                self.sA,
+                )
+        # get correct rate
+        self.cur_c_rate = self.validtor.validate()
+        to_continue = self.cur_c_rate + 0.001 > self.last_c_rate
+        self.last_c_rate = self.cur_c_rate
+        return to_continue
+
+
+    def __call__(self):
+        sys.stdout.write("begin to output...")
+        records, labels = self.trainset
+        total_timeit = Timeit(time.time())
+        n_turns = 0
+        while self.continue_turn() and n_turns < self.max_turns:
+            n_turns += 1
+            print 'turn:', n_turns
+            timeit = Timeit()
+            self.model.run()
+            timeit.print_time()
+        total_timeit.print_time()
+
+
+class Trainer(object):
+    def __init__(self, pk_data_ph=None, max_turns=1000):
+        print 'begin to train'
+        self._init()
+        self._init_exec()
+        self.validtor = None
+        self.last_c_rate = 0.0
+        self.cur_c_rate = 0.0
+        self.max_turns = max_turns
+
+    def _init(self):
+        self.trainset  = load_dataset('data/train-0.800000.pk')
+        #self.trainset  = load_dataset('data/sample-6000.pk')
+
+        records, labels = self.trainset
+
+        n_records, n_features = records.shape
+
+        self.conv_mlp = ConvMLP(learning_rate=0.02)
+
+    def _init_exec(self):
+        # for output layer
+        self._exec = ConvExec(
+            model = self.conv_mlp,
+            #model_root = '_models/1_450_sparce',
+            model_root = '/media/126_models/4_conv_1/',
+            window = 5,
+            n_iters = 20,
+            dataset = self.trainset,
+            tolerance = 0.001,
+            batch_size = 40,
+            )
+
+
+    def continue_turn(self):
+        if not self.validtor:
+            self.valid_set = load_valid_dataset('data/valid-0.800000.pk')
+            #self.valid_set = load_valid_dataset('data/sample-3000.pk')
+            self.validtor = Validator(
+                self.valid_set,
+                self.conv_mlp,
+                )
+        # get correct rate
+        self.cur_c_rate = self.validtor.validate()
+        to_continue = self.cur_c_rate + 0.001 > self.last_c_rate
+        self.last_c_rate = self.cur_c_rate
+        return to_continue
+
+
+    def __call__(self):
+        sys.stdout.write("begin to output...")
+        records, labels = self.trainset
+        total_timeit = Timeit(time.time())
+        n_turns = 0
+        while self.continue_turn() and n_turns < self.max_turns:
+            n_turns += 1
+            print 'turn:', n_turns
+            timeit = Timeit()
+            self._exec.run(self)
+            timeit.print_time()
+        total_timeit.print_time()
+
+
+
+
+if __name__ == '__main__':
+    #dataset = Dataset('./trainset.csv', './norm_float_dataset.pk')
+    #dataset.load_ori_dataset()
+    #dataset.load_dataset_to_norm_float()
+    #dataset.tofile()
+    #dataset.fromfile()
+    #trainset, validset = dataset.trans_data_type()
+    #print trainset.shape, validset.shape
+    print 'begin to train ...'
+    trainer = Trainer()
+    trainer()
