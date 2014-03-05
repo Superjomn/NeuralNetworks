@@ -248,4 +248,5 @@ if __name__ == '__main__':
     #sample_norm_dataset_to_file('./data/norm_float_dataset.pk', n_samples=8000)
     #sample_norm_dataset_to_file('./data/norm_float_dataset.pk', n_samples=3000)
     #load_dataset('data/sample-3000.pk')
-    split_dataset_to_train_validate('./data/train-0.800000.pk', ratio=0.78)
+    #split_dataset_to_train_validate('./data/train-0.800000.pk', ratio=0.78)
+    split_dataset_to_train_validate('./data/norm_float_dataset.pk', ratio=0.8)

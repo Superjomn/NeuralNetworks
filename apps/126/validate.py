@@ -9,6 +9,7 @@ Created on March 3, 2014
 from __future__ import division
 import sys
 import theano
+import math
 import numpy
 from theano import scalar as T
 import cPickle as pickle
@@ -55,7 +56,10 @@ class Validator(object):
         self._init()
 
     def _init(self):
-        train_fn, self.predict_fn = self.model.compile_finetune_funcs()
+        try:
+            train_fn, self.predict_fn = self.model.compile_finetune_funcs()
+        except:
+            self.predict_fn = self.model.compile_predict_fn()
 
     def predict(self):
         res = []
@@ -69,14 +73,42 @@ class Validator(object):
             res.append(y)
         return res
 
+    def batch_predict(self):
+        '''
+        predict by batch
+        '''
+        records,labels = self.dataset
+        n_records = records.shape[0]
+        batch_size = 40
+        n_batches = int(math.ceil(n_records/batch_size))
+        res = []
+        for i in xrange(n_batches):
+            x = records[i*batch_size:(i+1) * batch_size]
+            # to fix a bug
+            x_size = x.shape[0]
+            if x_size < batch_size:
+                print 'x_size < batch_size', x_size, batch_size
+                x = records[-batch_size:]
+                y_preds = self.predict_fn(x)[0]
+                y_preds = y_preds[-x_size:]
+            else:
+                y_preds = self.predict_fn(x)[0]
+
+            #print 'y_preds', y_preds
+            for y in y_preds:
+                res.append(y)
+        return res
+
     def validate(self):
         records,labels = self.dataset
         labels = list(labels)
         n_records = records.shape[0]
-        res = self.predict()
+        res = self.batch_predict()
+        #print 'predict res', res
         num = 0
         #print 'labels', labels
-        #print 'len res labels', len(res), len(labels)
+        print 'len res labels', len(res), len(labels)
+
         for i in xrange(n_records):
             if res[i] == labels[i]:
                 num += 1.0
@@ -86,6 +118,8 @@ class Validator(object):
         print 'Correct rate:', c_rate
         print 'Error rate:', 1 - c_rate
         return c_rate
+
+
 
 
 
