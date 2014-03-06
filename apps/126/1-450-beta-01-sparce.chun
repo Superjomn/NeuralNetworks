@@ -86,7 +86,7 @@ class _PretrainLayerExec(ExecFrame):
             model_root="", 
             n_iters=1000,
             dataset=None,
-            window=5, tolerance=0.005):
+            window=5, tolerance=0.1):
 
         _model = _PretrainLayer(
             model = model, 
@@ -109,7 +109,7 @@ class _FinetuneLayerExec(ExecFrame):
     def __init__(self, model, model_root="", 
             n_iters=1000, n_step2save=300,
             dataset=None,
-            window=5, tolerance=0.005,
+            window=5, tolerance=0.1,
             batch_size=400):
 
         _model = _FinetuneLayer(
@@ -129,7 +129,7 @@ class _FinetuneLayerExec(ExecFrame):
 
 
 class Trainer(object):
-    def __init__(self, pk_data_ph=None, max_turns=300):
+    def __init__(self, pk_data_ph=None, max_turns=500000):
         self._init()
         self._init_exec()
         self.validtor = None
@@ -145,6 +145,7 @@ class Trainer(object):
 
         self.sA = StackedAutoEncoder(
             n_visible = n_features,
+            beta = 0.01,
             hidden_struct = [450],
             n_output = 10,
             # TODO change from 0.01 to 0.003
@@ -163,7 +164,7 @@ class Trainer(object):
                 n_iters = 10,
                 dataset = self.trainset,
                 window = 5,
-                tolerance = 0.008,
+                tolerance = 0.1,
                 )
             self.hidden_layer_execs.append(_exec)
         # for output layer
@@ -174,7 +175,7 @@ class Trainer(object):
             window = 5,
             n_iters = 10,
             dataset = self.trainset,
-            tolerance = 0.008,
+            tolerance = 0.1,
             batch_size = 800,
             )
         self.output_layer_exec = _exec

@@ -78,7 +78,7 @@ class ConvExec(ExecFrame):
 
     def continue_turn(self):
         if not self.validtor:
-            self.valid_set = load_valid_dataset('data/valid-0.780000.pk')
+            self.valid_set = load_valid_dataset('data/valid-0.800000.pk')
             self.validtor = Validator(
                 self.valid_set,
                 self.sA,

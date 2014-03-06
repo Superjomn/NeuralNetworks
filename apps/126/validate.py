@@ -84,6 +84,7 @@ class Validator(object):
         res = []
         for i in xrange(n_batches):
             x = records[i*batch_size:(i+1) * batch_size]
+            print 'x', x
             # to fix a bug
             x_size = x.shape[0]
             if x_size < batch_size:
@@ -94,16 +95,18 @@ class Validator(object):
             else:
                 y_preds = self.predict_fn(x)[0]
 
-            #print 'y_preds', y_preds
+            print 'y_preds', y_preds
             for y in y_preds:
                 res.append(y)
+            res.append(y_preds)
         return res
 
     def validate(self):
         records,labels = self.dataset
         labels = list(labels)
         n_records = records.shape[0]
-        res = self.batch_predict()
+        #res = self.batch_predict()
+        res = self.predict()
         #print 'predict res', res
         num = 0
         #print 'labels', labels
