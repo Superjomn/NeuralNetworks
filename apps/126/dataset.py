@@ -202,6 +202,7 @@ def load_dataset(path):
     return data
 
 
+
 def split_dataset_to_train_validate(dataset_ph, data_root="data", ratio=0.8):
     timeit = Timeit()
     # paths

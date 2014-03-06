@@ -30,7 +30,7 @@ def load_dataset(dataset_ph):
             dataset = pickle.load(f)
     else:
         print '.. dataset is in csv format'
-        print '.. will ignore the first line'
+        print '.. attention: validator will ignore the first line'
         deno_dataset = DenoDataset(dataset_ph)
         records = deno_dataset.load_records_to_norm_float()
         dataset = (records, None)
@@ -157,9 +157,14 @@ if __name__ == '__main__':
 
     # task
     if args.task == 'predict':
-        pass
+        res = validator.batch_predict()
+        with open(args.topath) as f:
+            f.write(
+                '\n'.join(res))
+
     elif args.task == 'validate':
         validator.validate()
+
     else:
         print 'unrecognized task: "%s"' % args.task
 
