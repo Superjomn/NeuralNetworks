@@ -129,7 +129,7 @@ class Trainer(object):
         self._exec = ConvExec(
             model = self.conv_mlp,
             #model_root = '_models/1_450_sparce',
-            model_root = '/media/126_models/4_conv_1/',
+            model_root = '/media/126_models/4_conv_trainset_08/',
             window = 5,
             n_iters = 20,
             dataset = self.trainset,

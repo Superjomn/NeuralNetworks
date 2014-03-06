@@ -24,7 +24,7 @@ class _PretrainLayer(BaseModel):
     '''
     a layer execute framework for pretrain
     '''
-    def __init__(self, model, trainset, layer_no, batch_size=400):
+    def __init__(self, model, trainset, layer_no, batch_size=800):
         self.model = model
         self.trainset = trainset
         self.pretrain_fns = []
@@ -55,7 +55,7 @@ class _FinetuneLayer(BaseModel):
     '''
     a layer execute framework for pretrain
     '''
-    def __init__(self, model, trainset, batch_size=400):
+    def __init__(self, model, trainset, batch_size=800):
         self.model = model
         self.trainset = trainset
         self.batch_size = batch_size
@@ -82,7 +82,7 @@ class _FinetuneLayer(BaseModel):
 
 class _PretrainLayerExec(ExecFrame):
     def __init__(self, model, layer_no,
-            batch_size=400,
+            batch_size=800,
             model_root="", 
             n_iters=1000,
             dataset=None,
@@ -110,7 +110,7 @@ class _FinetuneLayerExec(ExecFrame):
             n_iters=1000, n_step2save=300,
             dataset=None,
             window=5, tolerance=0.1,
-            batch_size=400):
+            batch_size=800):
 
         _model = _FinetuneLayer(
             model = model,
@@ -126,6 +126,7 @@ class _FinetuneLayerExec(ExecFrame):
             window = window,
             tolerance = tolerance
             )
+
 
 
 class Trainer(object):
@@ -145,11 +146,9 @@ class Trainer(object):
 
         self.sA = StackedAutoEncoder(
             n_visible = n_features,
-            beta = 0.01,
-            hidden_struct = [450],
+            hidden_struct = [450, 200],
             n_output = 10,
-            # TODO change from 0.01 to 0.003
-            corrupt_levels = [0.003],
+            corrupt_levels = [0.008, 0.001],
             learning_rate = 0.02,
             )
 
@@ -161,9 +160,9 @@ class Trainer(object):
                 model = self.sA,
                 layer_no = no,
                 batch_size = 800,
-                n_iters = 10,
+                n_iters = 1,
                 dataset = self.trainset,
-                window = 5,
+                window = 10,
                 tolerance = 0.1,
                 )
             self.hidden_layer_execs.append(_exec)
@@ -171,9 +170,9 @@ class Trainer(object):
         _exec = _FinetuneLayerExec(
             model = self.sA,
             #model_root = '_models/1_450_sparce',
-            model_root = '/media/126_models/1_450_beta_01_sparce/',
-            window = 5,
-            n_iters = 10,
+            model_root = '/media/126_models/2_550_230_001_sparse_iter_1/',
+            window = 10,
+            n_iters = 1,
             dataset = self.trainset,
             tolerance = 0.1,
             batch_size = 800,
@@ -197,7 +196,7 @@ class Trainer(object):
                 )
         # get correct rate
         self.cur_c_rate = self.validtor.validate()
-        to_continue = self.cur_c_rate + 0.001 > self.last_c_rate
+        to_continue = self.cur_c_rate + 0.001 >= self.last_c_rate
         self.last_c_rate = self.cur_c_rate
         return to_continue
 
@@ -214,6 +213,7 @@ class Trainer(object):
             self._pretrain()
             self._finetune()
             timeit.print_time()
+        print 'done!'
         total_timeit.print_time()
 
 
