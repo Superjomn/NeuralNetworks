@@ -29,8 +29,8 @@ def load_dataset(dataset_ph):
         with open(dataset_ph) as f:
             dataset = pickle.load(f)
     else:
-        print '.. dataset is in csv format'
-        print '.. attention: validator will ignore the first line'
+        print '!!\tdataset is in csv format'
+        print '!!!\tattention: validator will ignore the first line'
         deno_dataset = DenoDataset(dataset_ph)
         records = deno_dataset.load_records_to_norm_float()
         dataset = (records, None)
@@ -88,7 +88,7 @@ class Validator(object):
             # to fix a bug
             x_size = x.shape[0]
             if x_size < batch_size:
-                print 'x_size < batch_size', x_size, batch_size
+                #print 'x_size < batch_size', x_size, batch_size
                 x = records[-batch_size:]
                 y_preds = self.predict_fn(x)[0]
                 y_preds = y_preds[-x_size:]
