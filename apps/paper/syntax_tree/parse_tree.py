@@ -9,20 +9,25 @@ Created on March 6, 2014
 parse the syntax tree
 '''
 from __future__ import division
+import re
 
 
 class Node(object):
     def __init__(self, name, lchild=None, rchild=None):
         self.name = self._space_token(name)
-        print 'self.name', self.name
-        print 'self.name.list', self.name.split()
         self.lchild = lchild
         self.rchild = rchild
         # run
         self.expand_subtree()
+        self.vector = None
 
     def is_leaf(self):
         return self.lchild == None and self.rchild  == None
+
+    def get_word(self):
+        if self.is_leaf():
+            rp = re.compile(r'(?P<name>([a-zA-Z.,?!]+)\))')
+            return rp.findall(self.name)[0][-1]
 
     def __repr__(self):
         return "<Node: %s>" % self.name
@@ -72,7 +77,8 @@ class Node(object):
             new_rchild_name = "(NEW %s )" % ' '.join(names[1:])
             self.rchild = Node(new_rchild_name)
         else:
-            print "children's name < 2"
+            pass
+            #print "children's name < 2"
 
 
     def _space_token(self, line):
@@ -91,7 +97,12 @@ class SyntaxTreeParser(object):
 
     Node = Node
     
-    def __init__(self, line):
+    def __init__(self, line=None):
+        self.line = line
+        if self.line:
+            self.build_tree()
+
+    def set_sentence(self, line):
         self.line = line
         self.build_tree()
 
@@ -127,22 +138,23 @@ class SyntaxTreeParser(object):
         dot.append("}")
         dot_file = '\n'.join(dot)
         #print 'dot', dot_file
-        print 'write dot file to ', fname
+        #print 'write dot file to ', fname
         with open(fname, 'w') as f:
             f.write(dot_file)
 
 
 
 
-if __name__ == "__main__":
 
+if __name__ == "__main__":
     node = Node("(S (NP (PRP I)) (VP (VBD saw) (NP (DT a) (NN man)) (PP (IN with) (NP (DT a) (NN telescope)))))")
     print node
     #node = Node("(NP a)")
 
     #print 'child names:', node.get_subtree_children_names()
-    line = "(S (NP (PRP I)) (VP (VBD saw) (NP (DT a) (NN man)) (PP (IN with) (NP (DT a) (NN telescope)))))"
+    line = "(S (INTJ (UH hello)) (, ,) (NP (PRP you)) (VP (MD should) (VP (VB know) (NP (PRP me)))) (. .))"
 
     tree = SyntaxTreeParser(line)
+    print 'word:', tree.root.rchild.lchild.get_word()
     tree.draw_graph()
 

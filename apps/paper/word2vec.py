@@ -14,13 +14,15 @@ from gensim.models.word2vec import Word2Vec
 
 from dataset import DUC as DUCdataset
 
+import config
+
 
 
 class Trainer(object):
     def __init__(self, sentences):
-        self.word2vec = Word2Vec(sentences, size=100, window=5, min_count=0, workers=4)
+        self.word2vec = Word2Vec(sentences, size=config.LEN_WORD_VECTOR, window=5, min_count=0, workers=4)
 
-    def get_word_evc(self, word):
+    def get_word_vec(self, word):
         '''
         :parameters:
             word: string
@@ -48,7 +50,7 @@ if __name__ == "__main__":
         sentences.append(duc.split_words(s))
     
     trainer = Trainer(sentences)
-    print 'the:', trainer.get_word_evc('the')
+    print 'the:', trainer.get_word_vec('the')
     trainer.model_tofile('1.chun')
 
 

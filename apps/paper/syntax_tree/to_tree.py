@@ -31,6 +31,7 @@ def to_tree(path, topath):
         subtrees = []
         for subtree in sentence.parse.subTrees():
             subtrees.append(subtree)
+        subtrees = sorted(subtrees, key=lambda x:len(x), reverse=True)
         tree = str(subtrees[1])
         print 'tree', tree
         trees.append(tree)
