@@ -181,6 +181,19 @@ class BatchAutoEncoder(AutoEncoder):
                 costs.append(cost)
             print i, 'cost', numpy.mean(numpy.array(costs).mean())
 
+    def train_iter(self, x, learning_rate=0.02):
+        '''
+        one iteration of training
+
+        :parameters:
+            x: a row of data matrix
+        '''
+        if not self.train_fn:
+            cost, updates = self.get_cost_updates(learning_rate=0.1)
+            self.train_fn = theano.function([self.x], cost, updates=updates)
+        cost = self.train_fn(x)
+        return cost
+
 
 
 if __name__ == "__main__":

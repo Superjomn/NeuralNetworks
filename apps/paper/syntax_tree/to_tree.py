@@ -11,6 +11,7 @@ generate syntax tree using Standford Parser
         https://github.com/vpekar/stanford-parser-in-jython
 
 '''
+import os
 import sys
 sys.path.append('/home/chunwei/Lab/stanford-parser-in-jython')
 from stanford import StanfordParser, PySentence
@@ -42,12 +43,54 @@ def to_tree(path, topath):
     f.close()
 
 
+class TreeGener(object):
+    def __init__(self):
+        # list of string 
+        self.trees = []
+
+    def parse_file(self, path):
+        '''
+        path:
+            path to files with a syntax tree each line
+        '''
+        f = open(path)
+        while True:
+            line = f.readline().strip()
+            if not line:
+                break
+            sentence = PARSER.parse_xml(line)
+            subtrees = []
+            for subtree in sentence.parse.subTrees():
+                subtrees.append(subtree)
+            subtrees = sorted(subtrees, key=lambda x:len(x), reverse=True)
+            tree = str(subtrees[1])
+            #print 'tree', tree
+            self.trees.append(tree)
+        f.close()
+
+    def get_trees(self):
+        return self.trees
+
 
 if __name__ == "__main__":
-    if len(sys.argv) == 1:
-        print '%s inpath outpath'
-        print '>> each line of the file should be a sentence'
+
+    if len(sys.argv) <= 2:
+        print '>>> cmd [topath] dirs'
         exit(-1)
-    path, topath = sys.argv[1:]
-    print 'parse tree from [%s] to [%s]' % (path, topath)
-    to_tree(path, topath)
+
+    tree_gener = TreeGener()
+
+    topath = sys.argv[1]
+    dirs = sys.argv[2:]
+
+    for root in dirs:
+        print 'scan dir:', root
+        for file in os.listdir(root):
+            print 'parse file:', file
+            path = os.path.join(root, file)
+            trees = tree_gener.get_trees()
+    content = '\n'.join(trees)
+    
+    f = open(topath, 'w')
+    f.write(content)
+    f.close()

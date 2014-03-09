@@ -58,7 +58,8 @@ class SyntaxTreeAutoencoder(object):
             rvector = self.train_node(node.rchild)
             x = numpy.append(lvector, rvector)
             if not update_node_vector:
-                self.autoencoder.train(lvector, rvector)
+                # train the tree node by node, TODO use batch to accelrate the speed?
+                self.autoencoder.train_iter(lvector, rvector)
             node.vector = self.get_merged_value(x)
         return node.vector
 

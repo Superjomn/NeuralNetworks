@@ -9,13 +9,14 @@ Created on March 6, 2014
 generate word vectors using word2vec from project gensim
 '''
 from __future__ import division
+import os
+import sys
 
 from gensim.models.word2vec import Word2Vec
 
 from dataset import DUC as DUCdataset
 
 import config
-
 
 
 class Trainer(object):
@@ -40,18 +41,32 @@ class Trainer(object):
         self.word2vec = Word2Vec.load(filename)
 
 
+def get_sentences_from_file(path):
+    sentences = []
+    with open(path) as f:
+        while True:
+            line = f.readline().strip()
+            if not line: break
+            ls = [s.lower() for s in line.split()]
+            sentences.append(ls)
+    print 'get %d sentences' % len(sentences)
+    return sentences
+
 
 
 if __name__ == "__main__":
-    duc = DUCdataset('/home/chunwei/Lab/NeuralNetworks/apps/paper/data/duc06/sent_raw/D0601A/APW19990707.0181.sent')
-    ss = duc.get_sentences()
+    if len(sys.argv) == 1:
+        print 'cmd topath paths'
+        exit(-1)
+    topath = sys.argv[1]
+    paths = sys.stdin.read().split()
     sentences = []
-    for s in ss:
-        sentences.append(duc.split_words(s))
-    
+    for path in paths:
+        duc = DUCdataset(path)
+        ss = duc.get_sentences()
+        sentences += [duc.split_words(s) for s in ss]
+
+    print 'generate sentences'
+        
     trainer = Trainer(sentences)
-    print 'the:', trainer.get_word_vec('the')
-    trainer.model_tofile('1.chun')
-
-
-
+    trainer.model_tofile(topath)
