@@ -24,8 +24,15 @@ train_word2vec()
 
 gen_syntax_tree()
 {
-    ./to_tree.py $DATA_ROOT
+    topath=$DATA_ROOT/syntax_trees.txt
+    path_list=$DATA_ROOT/duc.path.list
+    cd $DATA_ROOT/DUC
+    #cd $DATA_ROOT/test
+    find `pwd` -name *.sent > $path_list
+    cd $PROJECT_ROOT/syntax_tree
+    cat $path_list | ./to_tree.py $topath
 }
 
 
-train_word2vec
+#train_word2vec
+gen_syntax_tree
