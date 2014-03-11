@@ -13,6 +13,10 @@ import re
 
 
 class Node(object):
+
+    is_token = lambda x:x.startswith('(')
+    is_content = lambda x:x.endswith(')')
+
     def __init__(self, name, lchild=None, rchild=None):
         self.name = self._space_token(name)
         self.lchild = lchild
@@ -26,11 +30,9 @@ class Node(object):
 
     def get_word(self):
         if self.is_leaf():
-            rp = re.compile(r'(?P<name>([a-zA-Z.,?!]+)\))')
+            rp = re.compile(r'(?P<name>([a-zA-Z0-9.,?!]+)\))')
             res = rp.findall(self.name)
-            print 'name', self.name
             assert res, "no leaf's word find"
-            print 'get_word', res
             return res[0][-1].lower()
 
     def __repr__(self):
@@ -39,21 +41,24 @@ class Node(object):
     def expand_subtree(self):
         child_names = self.get_subtree_children_names()
         self.create_child_nodes(child_names)
-    
+
     def get_subtree_children_names(self):
         '''
         get children's names of the next level
         '''
         stack = []
-        is_token = lambda x:x.startswith('(')
-        is_content = lambda x:x.endswith(')')
         # save current child node's name parts
         content = []
         child_names = []
         n_tokens = 0
         n_content = 0
+        #self._pre_rm_redundant_token()
+        is_token = lambda x:x.startswith('(')
+        is_content = lambda x:x.endswith(')')
+
         for i,part in enumerate(self.name.split()):
             if is_token(part):
+                #if n_continuous_tokens < 3:
                 #print 'token:', part
                 stack.append(part)
                 n_tokens += 1
@@ -80,6 +85,10 @@ class Node(object):
             self.lchild = Node(names[0])
             new_rchild_name = "(NEW %s )" % ' '.join(names[1:])
             self.rchild = Node(new_rchild_name)
+        elif len(names) == 1:
+            print "children's name = 1", names
+            self.lchild = Node(names[0])
+
         elif len(names) == 0:
             print "children's name = 0" 
 
@@ -108,7 +117,6 @@ class SyntaxTreeParser(object):
 
     def set_sentence(self, line):
         self.line = line
-        print 'tree', line
         self.build_tree()
 
     def build_tree(self):
@@ -121,8 +129,26 @@ class SyntaxTreeParser(object):
                     Standford Parser
         '''
         self.root = self.Node(self.line)
+        self._adjust_tree(self.root)
 
-    def draw_graph(self, fname="tmp.dot"):
+    def _adjust_tree(self, node):
+        '''
+        remove redundant hidden nodes
+        '''
+        if not node:
+            return
+        c = node.lchild
+        if c and c.lchild and not c.rchild:
+            node.lchild = c.lchild
+        c = node.rchild
+        if c and c.lchild and not c.rchild:
+            node.rchild = c.lchild
+        self._adjust_tree(node.lchild)
+        self._adjust_tree(node.rchild)
+
+    
+
+    def draw_graph(self, fname="tmp.dot", detail=False):
         '''
         draw the graph using graphviz
         '''
@@ -133,9 +159,18 @@ class SyntaxTreeParser(object):
             if node != None:
                 node_idx[0] += 1
                 name = "node_%d" % node_idx[0]
-                dot += [
-                    '%s [label="%s"];' % (name, str(node)),
-                    '%s -> %s;' % (fname, name), ]
+                if detail:
+                    dot += [
+                        '%s [label="%s", shape="box"];' % (name, node.name),
+                    ]
+
+                else:
+                    if node.is_leaf():
+                        dot += [
+                            '%s [label="%s", shape="box"];' % (name, node.get_word()),]
+                    else:
+                        dot.append('%s [label="%s"];' % (name, 'inner node'))
+                dot.append( '%s -> %s;' % (fname, name))
                 scan_tree(name, node.lchild, node_idx, dot)
                 scan_tree(name, node.rchild, node_idx, dot)
 
@@ -152,15 +187,14 @@ class SyntaxTreeParser(object):
 
 
 if __name__ == "__main__":
-    node = Node("(S (NP (PRP I)) (VP (VBD saw) (NP (DT a) (NN man)) (PP (IN with) (NP (DT a) (NN telescope)))))")
-    print node
     #node = Node("(NP a)")
 
     #print 'child names:', node.get_subtree_children_names()
-    #line = "(S (NP (PRP It)) (VP (VBZ uses) (NP (NP (DT a) (NN satellite)) (PP (IN in) (NP (NP (DT a) (JJ fixed) (NN location)) (VP (VBN known) (PP (IN as) (NP (NP (NNP L1)) (SBAR (WHNP (WDT that)) (S (VP (MD will) (VP (VB allow) (S (NP (PRP it)) (VP (TO to) (VP (VB have) (NP (NP (DT a) (JJ continuous) (NN view)) (PP (IN of) (NP (NNP Earth)))) (PP (IN in) (NP (NN sunlight))))))))))))))))))"
-    line ="(S (MD will) (VB allow) (S (PRP it) (VP (TO to) (VP (VB have) (NP (NP (DT a) (JJ continuous) (NN view) ) (PP (IN of) (NP (NNP Earth) ) ) ) (PP (IN in) (NN sunlight) ) ) ) ) )"
+    line = "(S (NP (PRP It)) (VP (VBZ uses) (NP (NP (DT a) (NN satellite)) (PP (IN in) (NP (NP (DT a) (JJ fixed) (NN location)) (VP (VBN known) (PP (IN as) (NP (NP (NNP L1)) (SBAR (WHNP (WDT that)) (S (VP (MD will) (VP (VB allow) (S (NP (PRP it)) (VP (TO to) (VP (VB have) (NP (NP (DT a) (JJ continuous) (NN view)) (PP (IN of) (NP (NNP Earth)))) (PP (IN in) (NP (NN sunlight))))))))))))))))))"
+    #line = "(S (VP (MD will) (VP (VB allow) (S (NP (PRP it) ) (VP (TO to) (VP (VB have) (NP (NP (DT a) (JJ continuous) (NN view) ) (PP (IN of) (NP (NNP Earth) ) ) ) (PP (IN in) (NP (NN sunlight) ) ) ) ) ) ) ) )"
+    #line ="(S (MD will) (VB allow) (S (PRP it) (VP (TO to) (VP (VB have) (NP (NP (DT a) (JJ continuous) (NN view) ) (PP (IN of) (NP (NNP Earth) ) ) ) (PP (IN in) (NN sunlight) ) ) ) ) )"
 
     tree = SyntaxTreeParser(line)
-    #print 'word:', tree.root.rchild.lchild.get_word()
-    tree.draw_graph()
+    #node = Node(line)
+    tree.draw_graph(detail=False)
 
