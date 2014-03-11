@@ -36,4 +36,3 @@ nosetests.xml
 .pydevproject
 # dataset
 *.csv
-*.pk

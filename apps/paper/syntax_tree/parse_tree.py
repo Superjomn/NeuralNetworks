@@ -27,7 +27,11 @@ class Node(object):
     def get_word(self):
         if self.is_leaf():
             rp = re.compile(r'(?P<name>([a-zA-Z.,?!]+)\))')
-            return rp.findall(self.name)[0][-1]
+            res = rp.findall(self.name)
+            print 'name', self.name
+            assert res, "no leaf's word find"
+            print 'get_word', res
+            return res[0][-1].lower()
 
     def __repr__(self):
         return "<Node: %s>" % self.name
@@ -76,9 +80,8 @@ class Node(object):
             self.lchild = Node(names[0])
             new_rchild_name = "(NEW %s )" % ' '.join(names[1:])
             self.rchild = Node(new_rchild_name)
-        else:
-            pass
-            #print "children's name < 2"
+        elif len(names) == 0:
+            print "children's name = 0" 
 
 
     def _space_token(self, line):
@@ -87,6 +90,7 @@ class Node(object):
         '''
         while line.find('))') != -1:
             line = line.replace('))', ') )')
+            line = line.replace('\n', '')
         return line
 
 
@@ -104,6 +108,7 @@ class SyntaxTreeParser(object):
 
     def set_sentence(self, line):
         self.line = line
+        print 'tree', line
         self.build_tree()
 
     def build_tree(self):
@@ -152,9 +157,10 @@ if __name__ == "__main__":
     #node = Node("(NP a)")
 
     #print 'child names:', node.get_subtree_children_names()
-    line = "(S (INTJ (UH hello)) (, ,) (NP (PRP you)) (VP (MD should) (VP (VB know) (NP (PRP me)))) (. .))"
+    #line = "(S (NP (PRP It)) (VP (VBZ uses) (NP (NP (DT a) (NN satellite)) (PP (IN in) (NP (NP (DT a) (JJ fixed) (NN location)) (VP (VBN known) (PP (IN as) (NP (NP (NNP L1)) (SBAR (WHNP (WDT that)) (S (VP (MD will) (VP (VB allow) (S (NP (PRP it)) (VP (TO to) (VP (VB have) (NP (NP (DT a) (JJ continuous) (NN view)) (PP (IN of) (NP (NNP Earth)))) (PP (IN in) (NP (NN sunlight))))))))))))))))))"
+    line ="(S (MD will) (VB allow) (S (PRP it) (VP (TO to) (VP (VB have) (NP (NP (DT a) (JJ continuous) (NN view) ) (PP (IN of) (NP (NNP Earth) ) ) ) (PP (IN in) (NN sunlight) ) ) ) ) )"
 
     tree = SyntaxTreeParser(line)
-    print 'word:', tree.root.rchild.lchild.get_word()
+    #print 'word:', tree.root.rchild.lchild.get_word()
     tree.draw_graph()
 
