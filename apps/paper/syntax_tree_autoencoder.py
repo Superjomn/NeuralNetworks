@@ -15,11 +15,10 @@ import theano
 sys.path.append('..')
 sys.path.append('../../')
 import numpy 
-#from paper import config
+from paper import config
 from syntax_tree.parse_tree import SyntaxTreeParser
 from models.autoencoder import BatchAutoEncoder
 
-LEN_WORD_VECTOR = 100
 
 
 class SyntaxTreeAutoencoder(object):
@@ -28,8 +27,8 @@ class SyntaxTreeAutoencoder(object):
         self.word2vec = word2vec
         self.syntax_tree_parser = SyntaxTreeParser()
         self.autoencoder = BatchAutoEncoder(
-                n_visible = 2 * LEN_WORD_VECTOR,
-                n_hidden = LEN_WORD_VECTOR,
+                n_visible = 2 * config.LEN_WORD_VECTOR,
+                n_hidden = config.LEN_WORD_VECTOR,
                 )
         self.predict_fn = None
 
@@ -73,7 +72,7 @@ class SyntaxTreeAutoencoder(object):
                 self.autoencoder.get_hidden_values(self.autoencoder.x)
                 )
         print 'x', x, len(x)
-        x = x.reshape((1, 2*LEN_WORD_VECTOR))
+        x = x.reshape((1, 2*config.LEN_WORD_VECTOR))
         return self.predict_fn(x)
 
     def get_sentence_vector(self):

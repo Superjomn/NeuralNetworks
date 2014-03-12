@@ -16,9 +16,7 @@ from gensim.models.word2vec import Word2Vec
 
 from dataset import DUC as DUCdataset
 
-#import config
-
-LEN_WORD_VECTOR = 100
+import config
 
 
 def sentence_from_tree(tree):
@@ -44,7 +42,7 @@ def sentence_from_tree(tree):
 class Trainer(object):
     def __init__(self, sentences=[]):
         if sentences:
-            self.word2vec = Word2Vec(sentences, size=LEN_WORD_VECTOR, window=5, min_count=0, workers=4)
+            self.word2vec = Word2Vec(sentences, size=config.LEN_WORD_VECTOR, window=5, min_count=0, workers=4)
         else:
             self.word2vec = Word2Vec()
 
