@@ -15,28 +15,9 @@ import sys
 from gensim.models.word2vec import Word2Vec
 
 from dataset import DUC as DUCdataset
+from syntax_tree.parse_tree import SyntaxTreeParser
 
 import config
-
-
-def sentence_from_tree(tree):
-    '''
-    restore sentence from a parse tree
-    to maintain consistence with word2vec's trainset
-    '''
-    words = []
-
-    # preorder 
-    def visit(node):
-        if node:
-            if node.is_leaf():
-                word = node.get_word()
-                words.append(word)
-            else:
-                visit(node.lchild)
-                visit(node.rchild)
-    visit(tree.root)
-    return words
 
 
 class Trainer(object):
@@ -80,15 +61,19 @@ def get_sentences_from_file(path):
 
 if __name__ == "__main__":
     if len(sys.argv) == 1:
-        print 'cmd topath paths'
+        print 'cmd topath [parse tree paths]'
         exit(-1)
     topath = sys.argv[1]
     paths = sys.stdin.read().split()
     sentences = []
     for path in paths:
-        duc = DUCdataset(path)
-        ss = duc.get_sentences()
-        sentences += [duc.split_words(s) for s in ss]
+        with open(path) as f:
+            while True:
+                line = f.readline()
+                if not line: break
+                tree = SyntaxTreeParser(line)
+                ss = tree.get_ori_sentence()
+                sentences.append(ss)
 
     print 'generate sentences'
         

@@ -39,11 +39,18 @@ class SyntaxTreeAutoencoder(object):
                 output of Standford Parser
         '''
         for no,syntax in enumerate(syntax_trees):
+            print '.. training %dth tree' % no
             # generate trees
             self.syntax_tree_parser.set_sentence(syntax)
-            self.syntax_tree_parser.draw_graph('tmp.dot')
+            #self.syntax_tree_parser.draw_graph('tmp.dot')
             # recursively train autoencoder node by node
-            self.train_node(self.syntax_tree_parser.root)
+            try:
+                self.train_node(self.syntax_tree_parser.root)
+            except Exception,e:
+                print "!! error parsing %dth tree"
+                print "!! error:", e
+                print "!! content:\t%s" % syntax
+                print "!! drop this parse tree"
 
     def train_node(self, node, update_node_vector=True):
         '''
@@ -53,6 +60,8 @@ class SyntaxTreeAutoencoder(object):
             update_node_vector: bool
                 just update the node vector without trainning 
         '''
+        if not node:
+            return
         if node.is_leaf():
             node.vector = self.word2vec.get_word_vec(node.get_word())
         else:
@@ -71,7 +80,7 @@ class SyntaxTreeAutoencoder(object):
                 [self.autoencoder.x],
                 self.autoencoder.get_hidden_values(self.autoencoder.x)
                 )
-        print 'x', x, len(x)
+        #print 'x', x, len(x)
         x = x.reshape((1, 2*config.LEN_WORD_VECTOR))
         return self.predict_fn(x)
 
