@@ -197,4 +197,9 @@ if __name__ == "__main__":
     tree = SyntaxTreeParser(line)
     #node = Node(line)
     tree.draw_graph(detail=False)
+    import sys
+    sys.path.append('..')
+    #from _word2vec import sentence_from_tree
+    #print sentence_from_tree(tree)
+    
 

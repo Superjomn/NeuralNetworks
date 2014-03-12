@@ -21,6 +21,26 @@ from dataset import DUC as DUCdataset
 LEN_WORD_VECTOR = 100
 
 
+def sentence_from_tree(tree):
+    '''
+    restore sentence from a parse tree
+    to maintain consistence with word2vec's trainset
+    '''
+    words = []
+
+    # preorder 
+    def visit(node):
+        if node:
+            if node.is_leaf():
+                word = node.get_word()
+                words.append(word)
+            else:
+                visit(node.lchild)
+                visit(node.rchild)
+    visit(tree.root)
+    return words
+
+
 class Trainer(object):
     def __init__(self, sentences=[]):
         if sentences:
