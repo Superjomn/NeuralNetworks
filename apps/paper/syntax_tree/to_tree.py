@@ -74,21 +74,16 @@ class TreeGener(object):
 
 if __name__ == "__main__":
 
-    if len(sys.argv) == 1:
-        print '>>> cmd [topath] dirs'
-        exit(-1)
 
-    tree_gener = TreeGener()
-
-    topath = sys.argv[1]
     paths = sys.stdin.read().split()
 
     for path in paths:
         print 'parse file:', path
+        tree_gener = TreeGener()
         tree_gener.parse_file(path)
-    trees = tree_gener.get_trees()
-    content = '\n'.join(trees)
-    
-    f = open(topath, 'w')
-    f.write(content)
-    f.close()
+        trees = tree_gener.get_trees()
+        topath = path+'.tree'
+        content = '\n'.join(trees)
+        tf = open(topath, 'w') 
+        tf.write(content)
+        tf.close()
