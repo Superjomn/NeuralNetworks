@@ -15,11 +15,10 @@ import theano
 sys.path.append('..')
 sys.path.append('../../')
 import numpy 
-#from paper import config
+from paper import config
 from syntax_tree.parse_tree import SyntaxTreeParser
 from models.autoencoder import BatchAutoEncoder
 
-LEN_WORD_VECTOR = 100
 
 
 class SyntaxTreeAutoencoder(object):
@@ -28,8 +27,8 @@ class SyntaxTreeAutoencoder(object):
         self.word2vec = word2vec
         self.syntax_tree_parser = SyntaxTreeParser()
         self.autoencoder = BatchAutoEncoder(
-                n_visible = 2 * LEN_WORD_VECTOR,
-                n_hidden = LEN_WORD_VECTOR,
+                n_visible = 2 * config.LEN_WORD_VECTOR,
+                n_hidden = config.LEN_WORD_VECTOR,
                 )
         self.predict_fn = None
 
@@ -40,11 +39,18 @@ class SyntaxTreeAutoencoder(object):
                 output of Standford Parser
         '''
         for no,syntax in enumerate(syntax_trees):
+            print '.. training %dth tree' % no
             # generate trees
             self.syntax_tree_parser.set_sentence(syntax)
-            self.syntax_tree_parser.draw_graph('tmp.dot')
+            #self.syntax_tree_parser.draw_graph('tmp.dot')
             # recursively train autoencoder node by node
-            self.train_node(self.syntax_tree_parser.root)
+            try:
+                self.train_node(self.syntax_tree_parser.root)
+            except Exception,e:
+                print "!! error parsing %dth tree"
+                print "!! error:", e
+                print "!! content:\t%s" % syntax
+                print "!! drop this parse tree"
 
     def train_node(self, node, update_node_vector=True):
         '''
@@ -54,6 +60,8 @@ class SyntaxTreeAutoencoder(object):
             update_node_vector: bool
                 just update the node vector without trainning 
         '''
+        if not node:
+            return
         if node.is_leaf():
             node.vector = self.word2vec.get_word_vec(node.get_word())
         else:
@@ -72,8 +80,8 @@ class SyntaxTreeAutoencoder(object):
                 [self.autoencoder.x],
                 self.autoencoder.get_hidden_values(self.autoencoder.x)
                 )
-        print 'x', x, len(x)
-        x = x.reshape((1, 2*LEN_WORD_VECTOR))
+        #print 'x', x, len(x)
+        x = x.reshape((1, 2*config.LEN_WORD_VECTOR))
         return self.predict_fn(x)
 
     def get_sentence_vector(self):

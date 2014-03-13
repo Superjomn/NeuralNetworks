@@ -30,7 +30,8 @@ class Node(object):
 
     def get_word(self):
         if self.is_leaf():
-            rp = re.compile(r'(?P<name>([a-zA-Z0-9.,?!]+)\))')
+            print 'name:', self.name
+            rp = re.compile(r"(?P<name>([a-zA-Z0-9.,?!':;$\-`]+)\))")
             res = rp.findall(self.name)
             assert res, "no leaf's word find"
             return res[0][-1].lower()
@@ -145,6 +146,20 @@ class SyntaxTreeParser(object):
             node.rchild = c.lchild
         self._adjust_tree(node.lchild)
         self._adjust_tree(node.rchild)
+
+
+    def get_ori_sentence(self):
+        words = []
+        def visit(node):
+            if node:
+                if node.is_leaf():
+                    word = node.get_word()
+                    words.append(word)
+                else:
+                    visit(node.lchild)
+                    visit(node.rchild)
+        visit(self.root)
+        return words
 
     
 
