@@ -7,119 +7,19 @@ Created on March 7, 2014
 @mail:  yanchunwei@outlook.com
 '''
 import sys
-import theano
-from theano import tensor as T
 sys.path.append('..')
-import numpy
+sys.path.append('../..')
+import numpy as np
+import  theano
+from    theano import tensor as T
+import config
+from tree import BinaryNode
 from exec_frame import BaseModel
-
-
-class BaseParseNode(BaseNode):
-    '''
-    base model of the node of parse tree
-    should be implemented when use ParseTreeAutoencoder
-    '''
-    def __init__(self):
-        self.predict_iter = 0
-
-    def get_word(self):
-        raise NotImplemented
-
-
-class BaseParseTree(object):
-    '''
-    base model of parse tree
-    should be implemented when use ParseTreeAutoencoder
-    '''
-    pass
-    
-
-
-class ParseTreeAutoencoder(BaseModel):
-    '''
-    the trainning process is based on a pre-defined tree structure
-    '''
-    def __init__(self, len_vector, alpha=0.001, 
-            learning_rate=0.01):
-        '''
-        :parameters:
-            alpha: weight of sturctural cost
-        '''
-        self.len_vector = len_vector
-        self.predict_fn = None
-        self.autoencoder = BinaryAutoencoder(
-            len_vector = len_vector,
-            n_hidden = len_vector,
-        )
-
-    def get_vector(self, word):
-        '''
-        :parameters:
-            word: string
-
-        :returns:
-            word vector
-        '''
-        raise NotImplemented
-
-    def get_tree(self):
-        '''
-        yield a tree object
-        '''
-        raise NotImplemented
-
-
-    def train_iter(self):
-        '''
-        one iteration of the trainning process
-        '''
-        tree = self.get_tree()
-        self._train_node(tree.root)
-
-    def _train_node(self, node, predict=False):
-        '''
-        node: object of BaseNode
-        predict: bool
-            to get the merged vector or update the value
-        '''
-        if not node:
-            return
-        if node.is_leaf():
-            node.vector = self.get_vector(node.get_word())
-        else:
-            lvector = self.train_node(node.lchild)
-            rvector = self.train_node(node.rchild)
-            x = numpy.append(lvector, rvector)
-            if not predict:
-                self.autoencoder.train_iter(lvector, rvector)
-            node.vector = self.get_merged_value(x)
-        return node.vector
-
-
-    def get_merged_value(self, x):
-        '''
-        x: matrix
-        '''
-        #print 'x', x, len(x)
-        x = x.reshape((1, 2*self.len_vector))
-        hidden, cost = self.autoencoder.predict(x)
-        return hidden
-
-    def get_vector_batch(self, tree):
-        '''
-        get vectors
-        '''
-        predict_index = 0
-        def get_leafs_vector(root):
-            pass
-
-            
-        
+from models.recursive_autoencoder import BinaryAutoencoder
 
 
 # ------------------- greedy ---------------------------
-
-class GreedyNode(BaseNode):
+class GreedyNode(BinaryNode):
     '''
     base model of the node of Huffman tree
     '''
@@ -148,7 +48,7 @@ class GreedyTree(object):
             the tree that offers the minimum cost
         '''
         while len(self.nodes) > 1:
-            min_error = numpy.inf
+            min_error = np.inf
             j = -1
             new_node = None
 
@@ -209,7 +109,7 @@ class GreedyTreeAutoencoder(BaseModel, GreedyTree):
 
     def get_merge_cost(self, lnode, rnode):
         lvector = lnode.vector
-        x = numpy.append(lvector, rnode.vector)
+        x = np.append(lvector, rnode.vector)
         hidden, cost = self.bae.predict(x, 
                 lnode.n_children, rnode.n_children)
         return cost

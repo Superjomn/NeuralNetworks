@@ -167,14 +167,6 @@ class ExecFrame(object):
         with open(name, 'wb') as f:
             print 'save model to\t', name
             pk.dump(self.model.get_model(), f)
-            
-
-    '''
-    def load_model_from_file(self, path):
-        with open(path, 'rb') as f:
-            print 'load model from\t', path
-            self.model = pk.load(f)
-    '''
 
 
 
