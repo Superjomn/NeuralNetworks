@@ -12,12 +12,23 @@ class BaseNode(object):
     '''
     base model of tree's node
     '''
-    def __init__(self):
-        self.lchild = None
-        self.rchild = None
+    def __init__(self, lchild=None, rchild=None):
+        self.lchild = lchild
+        self.rchild = rchild
 
     def is_leaf(self):
         return not (self.lchild or self.rchild)
+
+
+class BinaryNode(BaseNode):
+    def __init__(self, lchild=None, rchild=None, vector=None):
+        # index to determine wheather to update vectors
+        BaseNode.__init__(self, 
+            lchild, rchild)
+        self.pred_index = 0
+        # count of children
+        self.n_children = 0
+        self.vector = vector
 
 
 

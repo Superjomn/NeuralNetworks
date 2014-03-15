@@ -13,17 +13,9 @@ import numpy
 import  theano
 from    theano import tensor as T
 import config
-from tree import BaseNode
+from tree import BinaryNode
 from exec_frame import BaseModel
 from recursive_autoencoder import BinaryAutoencoder
-
-class BinaryNode(BaseNode):
-    def __init__(self):
-        # index to determine wheather to update vectors
-        self.pred_index = 0
-        # count of children
-        self.n_children = 0
-
 
 class BinaryTree(object):
     '''

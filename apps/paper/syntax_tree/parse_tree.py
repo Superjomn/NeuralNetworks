@@ -10,14 +10,18 @@ parse the syntax tree
 '''
 from __future__ import division
 import re
+import sys
+sys.path.append('../../..')
+from models.recursive_autoencoder.tree import BinaryNode
 
 
-class Node(object):
+class Node(BinaryNode):
 
     is_token = lambda x:x.startswith('(')
     is_content = lambda x:x.endswith(')')
 
     def __init__(self, name, lchild=None, rchild=None):
+        BinaryNode.__init__(self, lchild, rchild)
         self.name = self._space_token(name)
         self.lchild = lchild
         self.rchild = rchild
