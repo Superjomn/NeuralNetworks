@@ -21,8 +21,8 @@ from exec_frame import BaseModel
 class BinaryAutoencoder(BaseModel):
     '''
     autoencoder which input are two vectors
-    and the cost function will be based on the two vectors'
-    reconstruction
+    and the cost function will be based on the two vectors' 
+    reconstruction errors
     '''
     def __init__(self, numpy_rng=None, input=None, 
             len_vector=8,
