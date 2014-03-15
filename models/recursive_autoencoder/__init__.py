@@ -98,13 +98,13 @@ class BinaryAutoencoder(BaseModel):
         y = self.get_hidden_values(self.x)
         z = self.get_reconstructed_input(y)
         # vectors of original input
-        c1 = self.x[0, 0:self.len_vector]
-        c2 = self.x[0, self.n_visible:]
+        c1 = self.x[0:self.len_vector]
+        c2 = self.x[self.len_vector:]
         # reconstruction of two vectors
-        _c1 = z[0, 0:self.len_vector]
-        _c2 = z[0, self.n_visible:]
+        _c1 = z[0:self.len_vector]
+        _c2 = z[self.len_vector:]
         # weight of left vector
-        lw = (self.lcount + 0.0) / (self.lcount + self.rchild)
+        lw = (self.lcount) / (self.lcount + self.rcount)
 
         L = T.sqrt(T.sum( 
             lw * (c1 - _c1) ** 2 + \
@@ -134,7 +134,7 @@ class BinaryAutoencoder(BaseModel):
 
     @property
     def train_fn(self):
-        cost, updates = self.get_cost_updates(learning_rate=0.1)
+        cost, updates = self.get_cost_updates()
         if not self._train_fn:
             self._train_fn = theano.function(
                     [self.x, self.lcount, self.rcount], 

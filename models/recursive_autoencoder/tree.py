@@ -7,6 +7,7 @@ Created on March 7, 2014
 @mail:  yanchunwei@outlook.com
 '''
 from __future__ import division
+import numpy as np
 
 class BaseNode(object):
     '''
@@ -27,7 +28,7 @@ class BinaryNode(BaseNode):
             lchild, rchild)
         self.pred_index = 0
         # count of children
-        self.n_children = 0
+        self.n_children = np.float32(1.0)
         self.vector = vector
 
 

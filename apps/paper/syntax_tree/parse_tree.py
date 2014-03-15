@@ -34,7 +34,7 @@ class Node(BinaryNode):
 
     def get_word(self):
         if self.is_leaf():
-            print 'name:', self.name
+            #print 'name:', self.name
             rp = re.compile(r"(?P<name>([a-zA-Z0-9.,?!':;$\-`]+)\))")
             res = rp.findall(self.name)
             assert res, "no leaf's word find"
@@ -91,11 +91,12 @@ class Node(BinaryNode):
             new_rchild_name = "(NEW %s )" % ' '.join(names[1:])
             self.rchild = Node(new_rchild_name)
         elif len(names) == 1:
-            print "children's name = 1", names
+            #print "children's name = 1", names
             self.lchild = Node(names[0])
 
         elif len(names) == 0:
-            print "children's name = 0" 
+            pass
+            #print "children's name = 0" 
 
 
     def _space_token(self, line):
@@ -165,6 +166,20 @@ class SyntaxTreeParser(object):
         visit(self.root)
         return words
 
+    def init_leaf_vec(self, word2vec):
+        '''
+        init leaf's vectors
+        '''
+        def init_vec(node):
+            if not node: return
+            if node.is_leaf():
+                word = node.get_word()
+                node.vector = word2vec.get_word_vec(word)
+            else:
+                init_vec(node.lchild)
+                init_vec(node.rchild)
+
+        init_vec(self.root)
     
 
     def draw_graph(self, fname="tmp.dot", detail=False):
