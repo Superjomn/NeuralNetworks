@@ -73,6 +73,6 @@ gen_syntax_tree()
 }
 
 
-#clean_data
-#train_word2vec
-gen_syntax_tree 4
+clean_data
+train_word2vec
+#gen_syntax_tree 4

@@ -11,12 +11,11 @@ generate word vectors using word2vec from project gensim
 from __future__ import division
 import os
 import sys
+sys.path.append('../..')
 
 from gensim.models.word2vec import Word2Vec
 
-from dataset import DUC as DUCdataset
 from syntax_tree.parse_tree import SyntaxTreeParser
-
 import config
 
 
