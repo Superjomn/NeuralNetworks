@@ -138,7 +138,9 @@ class BinaryAutoencoder(BaseModel):
         if not self._train_fn:
             self._train_fn = theano.function(
                     [self.x, self.lcount, self.rcount], 
-                    cost, updates=updates)
+                    cost, updates=updates,
+                    allow_input_downcast=True
+                    )
         return self._train_fn
 
     @property
@@ -149,7 +151,9 @@ class BinaryAutoencoder(BaseModel):
 
             self._predict_fn = theano.function(
                     [self.x, self.lcount, self.rcount],
-                    [hidden_value, cost])
+                    [hidden_value, cost],
+                    allow_input_downcast=True
+                    )
         return self._predict_fn
 
     def train_iter(self, x, lcount, rcount):

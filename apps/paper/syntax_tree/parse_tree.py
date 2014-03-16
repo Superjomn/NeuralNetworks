@@ -34,11 +34,14 @@ class Node(BinaryNode):
 
     def get_word(self):
         if self.is_leaf():
-            #print 'name:', self.name
-            rp = re.compile(r"(?P<name>([a-zA-Z0-9.,?!':;$\-`]+)\))")
+            rp = re.compile(r"(?P<name>([a-zA-Z0-9.,?!':;$\-`*/\\~+=#_]+)\))")
             res = rp.findall(self.name)
-            assert res, "no leaf's word find"
-            return res[0][-1].lower()
+            assert res, "no leaf's word find '%s'" % self.name
+            word = res[0][-1].lower()
+            if word == '\\':
+                word = '\\\\'
+            return word
+
 
     def __repr__(self):
         return "<Node: %s>" % self.name
@@ -63,13 +66,10 @@ class Node(BinaryNode):
 
         for i,part in enumerate(self.name.split()):
             if is_token(part):
-                #if n_continuous_tokens < 3:
-                #print 'token:', part
                 stack.append(part)
                 n_tokens += 1
 
             elif is_content(part):
-                #print 'content:', part
                 stack.append(part)
                 n_content += 1
                 #content.insert(0, stack.pop())
@@ -78,7 +78,6 @@ class Node(BinaryNode):
                     content = ' '.join(stack[1:])
                     child_names.append(content)
                     stack = [ stack[0] ]
-        #print 'child_names', child_names
         return child_names
 
     def create_child_nodes(self, names):
@@ -91,12 +90,10 @@ class Node(BinaryNode):
             new_rchild_name = "(NEW %s )" % ' '.join(names[1:])
             self.rchild = Node(new_rchild_name)
         elif len(names) == 1:
-            #print "children's name = 1", names
             self.lchild = Node(names[0])
 
         elif len(names) == 0:
             pass
-            #print "children's name = 0" 
 
 
     def _space_token(self, line):
@@ -125,6 +122,9 @@ class SyntaxTreeParser(object):
         self.line = line
         self.build_tree()
 
+    def get_root(self):
+        return self.root if self.root.lchild and self.root.rchild else self.root.lchild
+
     def build_tree(self):
         '''
         (S (NP (PRP I)) (VP (VBD saw) (NP (DT a) (NN man)) (PP (IN with) (NP (DT a) (NN telescope)))))
@@ -135,6 +135,7 @@ class SyntaxTreeParser(object):
                     Standford Parser
         '''
         self.root = self.Node(self.line)
+
         self._adjust_tree(self.root)
 
     def _adjust_tree(self, node):
@@ -143,12 +144,14 @@ class SyntaxTreeParser(object):
         '''
         if not node:
             return
-        c = node.lchild
-        if c and c.lchild and not c.rchild:
-            node.lchild = c.lchild
-        c = node.rchild
-        if c and c.lchild and not c.rchild:
-            node.rchild = c.lchild
+
+        for i in range(3):
+            c = node.lchild
+            if c and not node.rchild:
+                node.lchild = c.lchild
+                node.rchild = c.rchild
+
+
         self._adjust_tree(node.lchild)
         self._adjust_tree(node.rchild)
 
@@ -224,7 +227,11 @@ if __name__ == "__main__":
     #node = Node("(NP a)")
 
     #print 'child names:', node.get_subtree_children_names()
-    line = "(S (NP (PRP It)) (VP (VBZ uses) (NP (NP (DT a) (NN satellite)) (PP (IN in) (NP (NP (DT a) (JJ fixed) (NN location)) (VP (VBN known) (PP (IN as) (NP (NP (NNP L1)) (SBAR (WHNP (WDT that)) (S (VP (MD will) (VP (VB allow) (S (NP (PRP it)) (VP (TO to) (VP (VB have) (NP (NP (DT a) (JJ continuous) (NN view)) (PP (IN of) (NP (NNP Earth)))) (PP (IN in) (NP (NN sunlight))))))))))))))))))"
+    #line = "(S (NP (PRP It)) (VP (VBZ uses) (NP (NP (DT a) (NN satellite)) (PP (IN in) (NP (NP (DT a) (JJ fixed) (NN location)) (VP (VBN known) (PP (IN as) (NP (NP (NNP L1)) (SBAR (WHNP (WDT that)) (S (VP (MD will) (VP (VB allow) (S (NP (PRP it)) (VP (TO to) (VP (VB have) (NP (NP (DT a) (JJ continuous) (NN view)) (PP (IN of) (NP (NNP Earth)))) (PP (IN in) (NP (NN sunlight))))))))))))))))))"
+    #line = "(S (VP (VB SAINT-JEAN-SUR-RICHELIEU) (, ,) (S (S (NP (NNP Quebec) (PRP It)) (VP (VBZ is) (NP (NP (DT a) (NN paradox)) (SBAR (WHNP (WDT that)) (S (VP (VBZ keeps) (NP (NP (DT all)) (PP (IN of) (NP (NNP Canada)))) (PP (IN in) (NP (NN limbo))))))))) (: :) (S (NP (JJS Most) (NNPS Quebeckers)) (VP (VBP are) (RB n't) (ADJP (JJ eager) (PP (IN for) (NP (NP (DT another) (NN referendum)) (PP (IN on) (NP (NN secession)))))))) (, ,) (RB yet) (S (NP (PRP they)) (VP (VBP seem) (PP (IN on) (NP (NP (DT the) (NN verge)) (PP (IN of) (S (VP (VBG re-electing) (NP (NP (DT a) (NN government)) (VP (VBN committed) (PP (TO to) (NP (NN independence)))))))))))))))"
+    #line = "(FRAG (X (SYM *)) (NP (NNP MOTION) (NNP PICTURES)))"
+    #line = "(S (NP (PRP It)) (VP (VBZ is) (ADVP (RB clearly)) (PP (IN in) (NP (DT the) (JJ national) (NN interest) (S (VP (TO to) (VP (VB prevent) (NP (NP (DT the) (JJ further) (NN spread)) (PP (IN of) (NP (NNP HIV) (NNP \) (NNP AIDS)))) (PP (IN in) (NP (NNP Africa))) (, ,) (SBAR (S (NP (PRP she)) (VP (VBD said)))))))))))"
+    line = "(S (NP (PRP I)) (VP (VBD was) (VP (VP (VBG watching) (NP (PDT all) (DT the) (NNS others))) (CC and) (VP (VBG thinking) (PRT (RP back)) (SBAR (WHADVP (WRB when)) (S (NP (PRP I)) (VP (VBD saw) (NP (PRP$ their) (NNS performances)))))) (CC and) (VP (VBG thinking) (PP (IN of) (SBAR (SBAR (WHADVP (WRB how)) (S (NP (NP (DT the) (NN academy)) (VP (VBN changed) (`` `) (NP (NP (DT The) (NN winner)) (SBAR (S (VP (VBZ is))))) ('' ') (PP (TO to) (`` `) (NP (DT The) (NNP Oscar))))) (VP (VBZ goes) (PP (TO to)) (, ,) ('' ')))) (CC and) (SBAR (IN if) (S (SBAR (RB ever) (S (NP (EX there)) (VP (VBD was) (NP (NP (DT a) (NN category)) (SBAR (WHADVP (WRB where)) (S (NP (DT the) (NNP Oscar)) (VP (VBZ goes) (PP (TO to) (NP (NN someone))) (PP (IN without) (S (NP (PRP$ their)) (VP (VBG being) (NP (DT a) (NN winner)))))))))))) (, ,) (NP (PRP it)) (VP (VBZ 's) (NP (DT this) (NN one))))) (SBAR (IN because) (S (NP (PRP I)) (VP (VBP do) (RB not) (VP (VB feel) (PP (IN like) (S (VP (VBG being) (NP (DT the) (NN winner)))))))))))))))"
     #line = "(S (VP (MD will) (VP (VB allow) (S (NP (PRP it) ) (VP (TO to) (VP (VB have) (NP (NP (DT a) (JJ continuous) (NN view) ) (PP (IN of) (NP (NNP Earth) ) ) ) (PP (IN in) (NP (NN sunlight) ) ) ) ) ) ) ) )"
     #line ="(S (MD will) (VB allow) (S (PRP it) (VP (TO to) (VP (VB have) (NP (NP (DT a) (JJ continuous) (NN view) ) (PP (IN of) (NP (NNP Earth) ) ) ) (PP (IN in) (NN sunlight) ) ) ) ) )"
 
@@ -235,5 +242,3 @@ if __name__ == "__main__":
     sys.path.append('..')
     #from _word2vec import sentence_from_tree
     #print sentence_from_tree(tree)
-    
-

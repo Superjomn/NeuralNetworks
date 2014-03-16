@@ -44,6 +44,10 @@ class ParseTreeAutoencoder(object):
         '''
         tree = self.create_tree(parse_tree)
         bt = BinaryTree(tree.root, self.bae)
+        if bt.n_children < 5:
+            print '!! skip tree: two less children'
+            print '>\t', parse_tree
+            return
         return self.bta.train_with_tree(bt)
 
     def create_tree(self, parse_tree):
@@ -76,7 +80,8 @@ class  _ParseTreeAutoencoder(BaseModel):
         for i,tree in enumerate(self.strees):
             print i, tree
             cost = self.model.train_with_tree(tree)
-            costs.append(cost)
+            if cost is not None:
+                costs.append(cost)
         return np.mean(costs)
 
 
@@ -136,12 +141,15 @@ if __name__ == "__main__":
         cost = pa.train_with_tree(tree)
         print 'cost', cost
     '''
-    data_ph = "./data/syntax_trees.txt"
-    strees = get_stree_from_paths([data_ph])
+    data_phs = sys.stdin.read().split()
+
+    #data_ph = "./data/syntax_trees.txt"
+    strees = get_stree_from_paths(data_phs)
 
     main = Main(
-        w2v_ph = 'data/models/2.w2v',
+        w2v_ph = 'data/models/1.w2v',
         strees = strees,
-        model_root = "",
+        model_root = "data/models/pta/",
+        n_step2save = 1,
         )
     main.run()

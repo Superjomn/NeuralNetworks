@@ -38,6 +38,9 @@ class BinaryTree(object):
 
     def _init_child_count(self):
         def child_count(node):
+            if not node:
+                return np.float32(0.0)
+
             if node.is_leaf():
                 return np.float32(1.0)
 
@@ -49,6 +52,10 @@ class BinaryTree(object):
             return node.n_children
 
         child_count(self.root)
+
+    @property
+    def n_children(self):
+        return self.root.n_children
 
     def update_vec(self):
         '''
@@ -68,6 +75,8 @@ class BinaryTree(object):
         self.root.pred_index -= 1
 
     def get_vec(self, node, pred_index):
+        if not node:
+            return
         if node.is_leaf() or node.pred_index == pred_index:
             assert node.vector != None
             return node.vector

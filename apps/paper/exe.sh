@@ -30,7 +30,7 @@ train_word2vec()
     topath=$WORD2VEC_MODEL_PH
     path_list=$DATA_ROOT/duc.path.list
     cd $DATA_ROOT/DUC
-    find `pwd` -name *.sent.clean > $path_list
+    find `pwd` -name *.sent.clean.tree > $path_list
     mkdir -p $toroot
     cd $PROJECT_ROOT
     cat $path_list | ./_word2vec.py $topath
@@ -72,7 +72,20 @@ gen_syntax_tree()
     echo "done"
 }
 
+train_parse_tree_autoencoder()
+{
+    path_list=$DATA_ROOT/duc.path.list
+    cd $DATA_ROOT/DUC
+    #cd $DATA_ROOT/test
+    find `pwd` -name *.sent.clean.tree > $path_list
+    cd $PROJECT_ROOT
+    cat $path_list | ./parse_tree_autoencoder.py
+}
 
-clean_data
-train_word2vec
+
+
+
+#clean_data
+#train_word2vec
 #gen_syntax_tree 4
+train_parse_tree_autoencoder
