@@ -64,12 +64,13 @@ class BinaryTree(object):
         self.root.pred_index += 1
         # both left and right child should exist
         def update(node):
-            lvec = self.get_vec(node.lchild, self.root.pred_index)
-            rvec = self.get_vec(node.rchild, self.root.pred_index)
+            lvec = np.nan_to_num(self.get_vec(node.lchild, self.root.pred_index))
+            rvec = np.nan_to_num(self.get_vec(node.rchild, self.root.pred_index))
             vec = np.append(lvec, rvec)
             hidden = self.ae.hidden_fn(vec)
             node.vector = hidden
             node.pred_index += 1
+            assert node.pred_index == self.root.pred_index
         # recursively update the entire tree
         update(self.root)
         self.root.pred_index -= 1
@@ -172,8 +173,30 @@ class BinaryTreeAutoencoder(object):
         costs = []
         for i,vec in enumerate(vecs):
             n_child = child_counts[i]
-            cost = self.bae.train_fn(vec, n_child[0], n_child[1])
-            costs.append(cost)
+            vec = np.nan_to_num(vec)
+            if not np.isnan(np.sum(vec)):
+                #print '>vec', vec
+                assert n_child[0] > 0.0
+                assert n_child[1] > 0.0
+                #print '-' * 50
+                #print '>W', self.bae.W.get_value()
+                #print '>W_prime', self.bae.W_prime.get_value()
+                #print '>c', n_child
+                #print '>b', self.bae.b.get_value()
+                #print '>b_prime', self.bae.b_prime.get_value()
+                #print '>hidden', self.bae.hidden_fn(vec)
+                #print '>vec', vec
+                #print '>reconstructed', self.bae.predict(vec, n_child[0], n_child[1])
+                #updates = self.bae.update_fn(vec, n_child[0], n_child[1])
+                #print 'lw', updates[-1]
+                #print '>updates b:', np.array(updates[2])
+                #print '>updates b_prime:', np.array(updates[3])
+                cost = self.bae.train_fn(vec, n_child[0], n_child[1])
+                assert not np.isnan(cost), \
+                    "vec: %s\nW:%s" % (str(vec), str(self.bae.W.get_value()))
+                costs.append(cost)
+            else:
+                print '!> NaN in vec ...'
         return np.mean(costs)
 
     def get_root_vector(self, tree):

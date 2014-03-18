@@ -75,8 +75,8 @@ gen_syntax_tree()
 train_parse_tree_autoencoder()
 {
     path_list=$DATA_ROOT/duc.path.list
-    cd $DATA_ROOT/DUC
-    #cd $DATA_ROOT/test
+    cd $DATA_ROOT/DUC/duc06/sent_raw
+    #cd $DATA_ROOT/DUC
     find `pwd` -name *.sent.clean.tree > $path_list
     cd $PROJECT_ROOT
     cat $path_list | ./parse_tree_autoencoder.py

@@ -78,10 +78,11 @@ class  _ParseTreeAutoencoder(BaseModel):
     def train_iter(self):
         costs = []
         for i,tree in enumerate(self.strees):
-            print i, tree
+            #print i, tree
             cost = self.model.train_with_tree(tree)
             if cost is not None:
                 costs.append(cost)
+                print '%d>c\t%f' % (i, cost)
         return np.mean(costs)
 
 
@@ -149,7 +150,7 @@ if __name__ == "__main__":
     main = Main(
         w2v_ph = 'data/models/1.w2v',
         strees = strees,
-        model_root = "data/models/pta/",
+        model_root = "data/models/pta_full/",
         n_step2save = 1,
         )
     main.run()

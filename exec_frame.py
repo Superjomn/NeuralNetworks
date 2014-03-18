@@ -152,6 +152,8 @@ class ExecFrame(object):
     def save_model(self):
         if self.n_step2save == -1:
             return
+
+        if self.n_step2save == 1:
             name = os.path.join(
                     self.model_root, 
                     "%d-%d-%f.pk" % (self.times, self.iter_index, self.last_cost)
