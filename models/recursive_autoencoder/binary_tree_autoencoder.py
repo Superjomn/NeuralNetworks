@@ -175,22 +175,8 @@ class BinaryTreeAutoencoder(object):
             n_child = child_counts[i]
             vec = np.nan_to_num(vec)
             if not np.isnan(np.sum(vec)):
-                #print '>vec', vec
                 assert n_child[0] > 0.0
                 assert n_child[1] > 0.0
-                #print '-' * 50
-                #print '>W', self.bae.W.get_value()
-                #print '>W_prime', self.bae.W_prime.get_value()
-                #print '>c', n_child
-                #print '>b', self.bae.b.get_value()
-                #print '>b_prime', self.bae.b_prime.get_value()
-                #print '>hidden', self.bae.hidden_fn(vec)
-                #print '>vec', vec
-                #print '>reconstructed', self.bae.predict(vec, n_child[0], n_child[1])
-                #updates = self.bae.update_fn(vec, n_child[0], n_child[1])
-                #print 'lw', updates[-1]
-                #print '>updates b:', np.array(updates[2])
-                #print '>updates b_prime:', np.array(updates[3])
                 cost = self.bae.train_fn(vec, n_child[0], n_child[1])
                 assert not np.isnan(cost), \
                     "vec: %s\nW:%s" % (str(vec), str(self.bae.W.get_value()))
