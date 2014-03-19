@@ -87,7 +87,6 @@ class BinaryTree(object):
         assert lvec is not None
         assert rvec is not None
 
-
         x = np.append(lvec, rvec)
 
         node.vector = self.ae.hidden_fn(x)
@@ -132,6 +131,21 @@ class BinaryTree(object):
         get_children_vec(self.root)
 
         return children_vecs, child_counts
+
+
+class GlobalBinaryTree(BinaryTree):
+    '''
+    global updates
+    '''
+    def __init__(self, root, ae):
+        self.root = root
+        assert issubclass(
+            type(self.root), BinaryNode)
+        # autoencoder to merge two children's vectors  to paraent's vector
+        self.ae = ae
+        self.len_vector = self.ae.len_vector
+
+        self._init_child_count()
 
 
 

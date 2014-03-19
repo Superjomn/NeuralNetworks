@@ -73,7 +73,7 @@ class  _ParseTreeAutoencoder(BaseModel):
         self.strees = strees
 
     def get_model(self):
-        return self.model
+        return self.model.bae
 
     def train_iter(self):
         costs = []
