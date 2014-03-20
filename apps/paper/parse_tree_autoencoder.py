@@ -50,17 +50,17 @@ class ParseTreeAutoencoder(object):
             return
         return self.bta.train_with_tree(bt)
 
-    def create_tree(self, parse_tree):
+    def create_tree(self, stree):
         '''
         parse a line and return a tree
 
         :parameters:
-            parse_tree: string
+            stree: string
 
         :returns:
             syntax_tree : object of SyntaxTreeParser
         '''
-        syntax_tree = SyntaxTreeParser(parse_tree)
+        syntax_tree = SyntaxTreeParser(stree)
         # init leaf node's vector
         syntax_tree.init_leaf_vec(self.word2vec)
         return syntax_tree

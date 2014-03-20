@@ -150,24 +150,6 @@ class BinaryTree(object):
         return self.root.n_children
 
 
-
-class GlobalBinaryTree(BinaryTree):
-    '''
-    global updates
-    '''
-    def __init__(self, root, ae):
-        self.root = root
-        assert issubclass(
-            type(self.root), BinaryNode)
-        # autoencoder to merge two children's vectors  to paraent's vector
-        self.ae = ae
-        self.len_vector = self.ae.len_vector
-
-        self._init_child_count()
-
-
-
-
 class BinaryTreeAutoencoder(object):
     '''
     a binary tree tructure autoencoder
