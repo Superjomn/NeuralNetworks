@@ -35,6 +35,10 @@ class Tree2Vec(ParseTreeAutoencoder):
         '''
         parse_tree = self.create_tree(stree)
         bt = BinaryTree(parse_tree.root, self.bae)
+        if bt.n_children < 5:
+            print '!! skip tree: two less children'
+            print '>\t', parse_tree
+            return
         bt.forward_update_vec()
         sentence_vec =  bt.root.vector
         return sentence_vec
@@ -45,22 +49,31 @@ class Tree2Vec(ParseTreeAutoencoder):
 if __name__ == "__main__":
     args = sys.argv[1:]
     if len(args) == 0:
-        print 'cat strees | ./cmd.py w2v_ph bae_ph topath'
+        print 'cat stree_paths | ./cmd.py w2v_ph bae_ph'
         sys.exit(-1)
-    strees = sys.stdin.read().split()
+    stree_paths = sys.stdin.read().split()
     # args
-    w2v_ph, bae_ph, topath = args
+    w2v_ph, bae_ph = args
     # load word2vec
     _word2vec = Word2Vec()
     _word2vec.model_fromfile(w2v_ph)
     # load bae
     bae = obj_from_file(bae_ph)
     tree2vec = Tree2Vec(_word2vec, bae)
-    sentence_vecs = []
-    for stree in strees:
-        sentence_vec = tree2vec.get_vec_from_stree(stree)
-        str_vec = '\t'.join(sentence_vec)
-        sentence_vecs.append(str_vec)
+    for path in stree_paths:
+        output = []
+        with open(path) as f:
+            strees = f.readlines()
+            for stree in strees:
+                stree = stree.strip()
+                #print 'parsing', stree
+                sentence_vec = tree2vec.get_vec_from_stree(stree)
+                if sentence_vec is not None:
+                    str_vec = ' '.join([str(i) for i in sentence_vec])
+                    c = str_vec + "\r"  + stree
+                    output.append(c)
+        topath = "%s.vec" % path
 
-    with open(topath, 'w') as f:
-        f.write('\n'.join(sentence_vecs))
+        print 'write res to', topath
+        with open(topath, 'w') as f:
+            f.write('\n'.join(output))

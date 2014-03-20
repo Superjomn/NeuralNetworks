@@ -82,10 +82,22 @@ train_parse_tree_autoencoder()
     cat $path_list | ./parse_tree_autoencoder.py
 }
 
+stree_to_sentence_vec()
+{
+    path_list=$DATA_ROOT/duc.path.list
+    bae_path=$DATA_ROOT/models/pta_full/0-9-0.725609.pk
+    cd $DATA_ROOT/DUC/duc06/sent_raw
+    #cd $DATA_ROOT/DUC
+    find `pwd` -name *.sent.clean.tree > $path_list
+    cd $PROJECT_ROOT
+    cat $path_list | ./parse_tree_to_sentence_vec.py $WORD2VEC_MODEL_PH $bae_path
+}
+
 
 
 
 #clean_data
 #train_word2vec
 #gen_syntax_tree 4
-train_parse_tree_autoencoder
+#train_parse_tree_autoencoder
+stree_to_sentence_vec

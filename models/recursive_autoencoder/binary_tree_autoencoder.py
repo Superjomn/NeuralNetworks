@@ -61,8 +61,10 @@ class BinaryTree(object):
         self.root.pred_index += 1
         # both left and right child should exist
         def update(node):
-            lvec = np.nan_to_num(self.get_vec(node.lchild, self.root.pred_index))
-            rvec = np.nan_to_num(self.get_vec(node.rchild, self.root.pred_index))
+            #lvec = np.nan_to_num(self.get_vec(node.lchild, self.root.pred_index))
+            #rvec = np.nan_to_num(self.get_vec(node.rchild, self.root.pred_index))
+            lvec = self.get_vec(node.lchild, self.root.pred_index)
+            rvec = self.get_vec(node.rchild, self.root.pred_index)
             vec = np.append(lvec, rvec)
             hidden = self.ae.hidden_fn(vec)
             node.vector = hidden
