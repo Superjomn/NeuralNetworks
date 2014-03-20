@@ -191,7 +191,9 @@ class BinaryAutoencoder(BaseModel):
         if not self._hidden_fn:
             self._hidden_fn = theano.function(
                 [self.x],
-                T.tanh(T.dot(self.x, self.W) + self.b))
+                T.tanh(T.dot(self.x, self.W) + self.b),
+                allow_input_downcast=True,
+                )
         return self._hidden_fn
 
     # -------------- two trainning methods ----------------

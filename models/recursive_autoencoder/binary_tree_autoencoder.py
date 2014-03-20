@@ -65,7 +65,10 @@ class BinaryTree(object):
             #rvec = np.nan_to_num(self.get_vec(node.rchild, self.root.pred_index))
             lvec = self.get_vec(node.lchild, self.root.pred_index)
             rvec = self.get_vec(node.rchild, self.root.pred_index)
+            if lvec is None:
+                return
             vec = np.append(lvec, rvec)
+            #print 'vec', vec
             hidden = self.ae.hidden_fn(vec)
             node.vector = hidden
             node.pred_index += 1
@@ -150,6 +153,7 @@ class BinaryTree(object):
         return the number of children
         '''
         return self.root.n_children
+
 
 
 class BinaryTreeAutoencoder(object):
