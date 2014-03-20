@@ -96,12 +96,13 @@ class BinaryAutoencoder(BaseModel):
         # count of right's children
         self.rcount = T.fscalar('c2')
         
-        # compiled functions
-        self._train_fn = None
+        # private compiled functions
+        self._forward_train_fn = None
         self._predict_fn = None
         self._update_fn = None
         self._hidden_fn = None
         self._cost_fn = None
+        self._back_recon_train_fn = None
 
         #self.params = [self.W, self.W_prime, self.b, self.b_prime]
         self.params = [self.W, self.b, self.b_prime]
@@ -113,6 +114,9 @@ class BinaryAutoencoder(BaseModel):
         return T.tanh(T.dot(hidden, self.W_prime) + self.b_prime)
 
     def get_cost_updates(self):
+        '''
+        used in forword proporation
+        '''
         y = self.get_hidden_values(self.x)
         z = self.get_reconstructed_input(y)
         # vectors of original input
@@ -148,6 +152,30 @@ class BinaryAutoencoder(BaseModel):
             updates.append((param, update))
         return cost, updates
 
+    def get_back_recon_cost_updates(self):
+        self.pre_lvec = T.fvector(name='pre_lvec')
+        self.pre_rvec = T.fvector(name='pre_rvec')
+        self.fath_vec = T.fvector(name='fath_vec')
+
+        rec_vec = self.get_reconstructed_input(self.fath_vec)
+        _lvec = rec_vec[:self.len_vector]
+        _rvec = rec_vec[self.len_vector:]
+
+        lw = self.lcount / (self.lcount + self.rcount)
+
+        L = T.sqrt(T.sum(
+            lw *    (self.pre_lvec - _lvec) ** 2 + \
+            (1-lw) *(self.pre_rvec - _rvec) ** 2)) 
+
+        cost = L
+        gparams = T.grad(cost, self.params)
+        updates = []
+        for param, gparam in zip(self.params, gparams):
+            update = param - self.learning_rate * gparam
+            update = T.cast(update, theano.config.floatX)
+            updates.append((param, update))
+        return cost, updates
+
     @property
     def cost_fn(self):
         if not self._cost_fn:
@@ -166,18 +194,34 @@ class BinaryAutoencoder(BaseModel):
                 T.tanh(T.dot(self.x, self.W) + self.b))
         return self._hidden_fn
 
-
+    # -------------- two trainning methods ----------------
     @property
-    def train_fn(self):
-        if not self._train_fn:
+    def forward_train_fn(self):
+        '''
+        local updates with single node's forward and backward
+        reconstruction cost
+        '''
+        if not self._forward_train_fn:
             cost, updates = self.get_cost_updates()
-            self._train_fn = theano.function(
+            self._forward_train_fn = theano.function(
                     [self.x, self.lcount, self.rcount], 
                     cost, updates=updates,
                     allow_input_downcast=True,
                     on_unused_input='ignore',
                     )
-        return self._train_fn
+        return self._forward_train_fn
+
+    @property
+    def back_recon_train_fn(self):
+        if not self._back_recon_train_fn:
+            cost, updates = self.get_back_recon_cost_updates()
+            self._back_recon_train_fn = theano.function(
+                    [self.fath_vec, 
+                        self.pre_lvec, self.pre_rvec,
+                        self.lcount, self.rcount],
+                    cost,
+                    update = updates)
+        return self._back_recon_train_fn
 
     @property
     def predict_fn(self):
@@ -205,6 +249,9 @@ class BinaryAutoencoder(BaseModel):
                 on_unused_input='ignore',
                 )
         return self._update_fn
+
+    def recon_fn(self):
+        pass
 
 
     def train_iter(self, x, lcount, rcount):

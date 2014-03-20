@@ -53,11 +53,8 @@ class BinaryTree(object):
 
         child_count(self.root)
 
-    @property
-    def n_children(self):
-        return self.root.n_children
 
-    def update_vec(self):
+    def forward_update_vec(self):
         '''
         update each node's vector
         '''
@@ -75,7 +72,16 @@ class BinaryTree(object):
         update(self.root)
         self.root.pred_index -= 1
 
+    def backward_recon_vec(self):
+        pass
+
+
+
+
     def get_vec(self, node, pred_index):
+        '''
+        get a node's pred_indexth updated vector 
+        '''
         if not node:
             return
         if node.is_leaf() or node.pred_index == pred_index:
@@ -88,15 +94,19 @@ class BinaryTree(object):
         assert rvec is not None
 
         x = np.append(lvec, rvec)
-
         node.vector = self.ae.hidden_fn(x)
         node.pred_index += 1
         assert node.pred_index == pred_index
         return node.vector
+
+    def get_sub_trees(self):
+        pass
+
         
     def get_vec_batch(self):
         '''
         predict each node's 2-vector
+        and return a list of vectors as a batch
 
         :parameters:
             index: int 
@@ -104,7 +114,7 @@ class BinaryTree(object):
         returns:
             a list of vectors
         '''
-        self.update_vec()
+        self.forward_update_vec()
 
         children_vecs = []
         child_counts = []
@@ -131,6 +141,14 @@ class BinaryTree(object):
         get_children_vec(self.root)
 
         return children_vecs, child_counts
+
+    @property
+    def n_children(self):
+        '''
+        return the number of children
+        '''
+        return self.root.n_children
+
 
 
 class GlobalBinaryTree(BinaryTree):
@@ -169,6 +187,25 @@ class BinaryTreeAutoencoder(object):
                 W = W,
                 bhid = bhid, bvis = bvis)
 
+
+    # --------------- two kinds of train --------------
+    def forward_train(self, vec, lcount, rcount):
+        '''
+        training with forward update and reconstruction of
+        each node
+        '''
+        cost = self.bae.train_fn(vec, lcount, rcount)
+        return cost
+
+    def back_recon_train(self, fath_vec, pre_lvec, pre_rvec, lcount, rcount):
+        '''
+        training with reverse remodeling loss
+        '''
+        cost = self.bae.back_recon_train_fn(
+                fath_vec, pre_lvec, pre_rvec, lcount, rcount)
+        return cost
+
+    # the overall training function
     def train_with_tree(self, tree):
         '''
         get a tree's updated 2-vectors as a matrix
@@ -191,13 +228,25 @@ class BinaryTreeAutoencoder(object):
             if not np.isnan(np.sum(vec)):
                 assert n_child[0] > 0.0
                 assert n_child[1] > 0.0
-                cost = self.bae.train_fn(vec, n_child[0], n_child[1])
+                cost = self.bae.forward_train_fn(vec, n_child[0], n_child[1])
                 assert not np.isnan(cost), \
                     "vec: %s\nW:%s" % (str(vec), str(self.bae.W.get_value()))
                 costs.append(cost)
             else:
                 print '!> NaN in vec ...'
         return np.mean(costs)
+
+    def back_recon_train(self, fath_vec, pre_lvec, pre_rvec, lcount, rcount):
+        '''
+        :parameters:
+            pre_lvec: lchild's vector
+            pre_rvec: rchild's vector
+            fath_vec: father's vector
+        '''
+        cost = self.bae.back_recon_train_fn(fath_vec, pre_lvec, pre_rvec, lcount, rcount)
+
+
+
 
     def get_root_vector(self, tree):
         return tree.root.vector
