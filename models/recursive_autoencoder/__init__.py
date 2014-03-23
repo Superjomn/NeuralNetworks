@@ -1,281 +1,285 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 '''
-Created on March 12, 2014
+Created on Feb 24, 2014
 
 @author: Chunwei Yan @ PKU
 @mail:  yanchunwei@outlook.com
-
-Implementation of Recursive Autoencoder
-
-For detail, read <R. Socher, J. Pennington, E. H. Huang, A. Y. Ng, and C. D. Manning, "Semi-Supervised Recursive Autoencoder for Predicting Sentiment Distributions">
 '''
-import sys
-sys.path.append('..')
-import theano
+from __future__ import division
+import theano 
 from theano import tensor as T
-import numpy
-from exec_frame import BaseModel
+import numpy 
 
 
-class BinaryAutoencoder(BaseModel):
-    '''
-    autoencoder which input are two vectors
-    and the cost function will be based on the two vectors' 
-    reconstruction errors
-    '''
-    def __init__(self, numpy_rng=None, input=None, 
-            len_vector=8,
-            alpha=0.001, learning_rate=0.01,
-            W=None, W_prime=None, bhid=None, bvis=None):
+class Param(object):
+
+    def __init__(self, numpy_rng=None, 
+            len_vector=50,
+            W1=None, W2=None, W3=None, 
+            b1=None, b2=None, b3=None):
         '''
         :parameters:
-            input: tensor of concation of two vectors
-            alpha: weight of sturctural cost
+
+            W1: forward proporation weight for children
+            W2: backward proporation weight for left child
+            W3: backward proporation weight for right child
+            b1: forward bias for children 
+            b2: backward proporation bias for left child
+            b3: backward proporation bias for right child
         '''
-        # the n_visible is len_vector * 2
         self.len_vector = len_vector
-        n_visible = len_vector * 2
-        n_hidden = len_vector
-
-        if not numpy_rng:
-            numpy_rng=numpy.random.RandomState(1234)
-
-        if not W:
-            initial_W = numpy.asarray(
-                numpy_rng.uniform(
-                    low=-4 * numpy.sqrt(6. / (n_hidden + n_visible)),
-                    high=4 * numpy.sqrt(6. / (n_hidden + n_visible)),
-                    size=(n_visible, n_hidden)), 
-                dtype=theano.config.floatX)
-            W = theano.shared(
-                value=initial_W, 
-                name='W'
-                )
-
-        '''
-        if not W_prime:
-            initial_W = numpy.asarray(
-                numpy_rng.uniform(
-                    low=-4 * numpy.sqrt(6. / (n_hidden + n_visible)),
-                    high=4 * numpy.sqrt(6. / (n_hidden + n_visible)),
-                    size=(n_hidden, n_visible)), 
-                dtype=theano.config.floatX)
-            W_prime = theano.shared(
-                value=initial_W, 
-                name='W'
-                )
-        '''
-
-        if not bvis:
-            bvis = theano.shared(value=numpy.zeros(n_visible, 
-                dtype=theano.config.floatX) + 0.0001,
-                borrow = True,
-                name='bvis') 
-
-        if not bhid:
-            bhid = theano.shared(value = numpy.zeros(n_hidden,
-                dtype=theano.config.floatX) + 0.0001,
-                borrow = True,
-                name='bhid') 
-
-        self.W = W
-        #self.W_prime = W_prime
-        self.W_prime = W.T
-        self.b = bhid
-        self.b_prime = bvis
         self.numpy_rng = numpy_rng
-        self.alpha = alpha
-        self.learning_rate = learning_rate
 
-        self.x = input
-        if not self.x:
-            self.x = T.fvector(name='x')
-        # count of left's children
-        self.lcount = T.fscalar('c1')
-        # count of right's children
-        self.rcount = T.fscalar('c2')
-        
-        # private compiled functions
-        self._forward_train_fn = None
-        self._predict_fn = None
-        self._update_fn = None
-        self._hidden_fn = None
-        self._cost_fn = None
-        self._back_recon_train_fn = None
+        self.W1, self.W2, self.W3 = W1, W2, W3
+        self.b1, self.b2, self.b3 = b1, b2, b3
 
-        #self.params = [self.W, self.W_prime, self.b, self.b_prime]
-        self.params = [self.W, self.b, self.b_prime]
+        self._init_parameters()
 
-    def get_hidden_values(self, input):
-        return T.tanh(T.dot(input, self.W) + self.b)
 
-    def get_reconstructed_input(self, hidden):
-        return T.tanh(T.dot(hidden, self.W_prime) + self.b_prime)
+    def _init_model_parameters(self):
+        if not self.numpy_rng:
+            self.numpy_rng=numpy.random.RandomState(1234)
 
-    def get_cost_updates(self):
-        '''
-        used in forword proporation
-        '''
-        y = self.get_hidden_values(self.x)
-        z = self.get_reconstructed_input(y)
-        # vectors of original input
-        c1 = self.x[0:self.len_vector]
-        c2 = self.x[self.len_vector:]
-        # reconstruction of two vectors
-        _c1 = z[0:self.len_vector]
-        _c2 = z[self.len_vector:]
-        # weight of left vector
-        lw = (self.lcount) / (self.lcount + self.rcount)
-        self.lw = lw
-
-        self.L = T.sqrt(T.sum( 
-            lw *       (c1 - _c1) ** 2 + \
-            (1 - lw) * (c2 - _c2) ** 2))  
-                #+ self.alpha * T.sum((self.W ** 2))
-        #self.L = T.sqrt(T.sum( (z - self.x) ** 2))
-        '''
-        self.L = T.sqrt(T.sum(
-            (c1-_c1)**2 + (c2-_c2)**2
-            ))
-        '''
-        # mean cost of all records
-        #sparcity_cost = y 
-        #cost = T.mean(L) 
-        cost = self.L
-
-        gparams = T.grad(cost, self.params)
-        updates = []
-        for param, gparam in zip(self.params, gparams):
-            update = param - self.learning_rate * gparam
-            update = T.cast(update, theano.config.floatX)
-            updates.append((param, update))
-        return cost, updates
-
-    def get_back_recon_cost_updates(self):
-        self.pre_lvec = T.fvector(name='pre_lvec')
-        self.pre_rvec = T.fvector(name='pre_rvec')
-        self.fath_vec = T.fvector(name='fath_vec')
-
-        rec_vec = self.get_reconstructed_input(self.fath_vec)
-        _lvec = rec_vec[:self.len_vector]
-        _rvec = rec_vec[self.len_vector:]
-
-        lw = self.lcount / (self.lcount + self.rcount)
-
-        L = T.sqrt(T.sum(
-            lw *    (self.pre_lvec - _lvec) ** 2 + \
-            (1-lw) *(self.pre_rvec - _rvec) ** 2)) 
-
-        cost = L
-        gparams = T.grad(cost, self.params)
-        updates = []
-        for param, gparam in zip(self.params, gparams):
-            update = param - self.learning_rate * gparam
-            update = T.cast(update, theano.config.floatX)
-            updates.append((param, update))
-        return cost, updates
-
-    @property
-    def cost_fn(self):
-        if not self._cost_fn:
-            self._cost_fn = theano.function(
-                [self.x, self.lcount, self.rcount],
-                self.L,
-                on_unused_input='ignore',
+        if not self.W1:
+            self.W1 = theano.shared(
+                value = self._initial_random_weight_value(2*self.len_vector, self.len_vector),
+                name="W1"
                 )
-        return self._cost_fn
+        if not self.W2:
+            self.W2 = theano.shared(
+                value = self._initial_random_weight_value(self.len_vector, self.len_vector),
+                name="W2"
+                )
+        if not self.W3:
+            self.W3 = theano.shared(
+                value = self._initial_random_weight_value(self.len_vector, self.len_vector),
+                name="W3"
+                )
+        if not self.b1:
+            self.b1 = theano.shared(value=numpy.zeros(2*self.len_vector, 
+                dtype=theano.config.floatX),
+                borrow = True,
+                name='b1'
+                ) 
+        if not self.b2:
+            self.b2 = theano.shared(value=numpy.zeros(self.len_vector, 
+                dtype=theano.config.floatX),
+                borrow = True,
+                name='b2'
+                ) 
+        if not self.b3:
+            self.b3 = theano.shared(value=numpy.zeros(self.len_vector, 
+                dtype=theano.config.floatX),
+                borrow = True,
+                name='b3'
+                ) 
+        
+    def _initial_random_weight_value(self, n, m):
+        initial_W = numpy.asarray(
+            self.numpy_rng.uniform(
+                low=-4 * numpy.sqrt(6. / (n + m)),
+                high=4 * numpy.sqrt(6. / (n + m)),
+                size=(n, m)), 
+            dtype=theano.config.floatX)
+        return initial_W
+
+
+class Autoencoder(Param):
+    def __init__(self, numpy_rng=None, len_vector=50,
+            W1=None, W2=None, W3=None, 
+            b1=None, b2=None, b3=None):
+        Param.__init__(self, 
+            numpy_rng = numpy_rng, len_vector = len_vector,
+            W1 = W1, W2 = W2, W3 = W3, b1 = b1, 
+            b2 = b2, b3 = b3
+            )
+
+        # theano functions
+        self._hidden_fn = None
+        self._reconstruct_fn = None
+        self._delta_out1_fn = None
+        self._delta_out2_fn = None
+        self._Y1C1_fn = None
+        self._Y2C2_fn = None
+        # theano parameters
+        self.x = T.fvector(name='x')
+        # parent's feature
+        self.p = T.fvector(name='p')
+        self.c1 = T.fvector(name='c1')
+        self.c2 = T.fvector(name='c2')
+
+        self.f = T.tanh
+        self.f_der = T.grad(self.f(self.x), self.x)
+
+
+    def get_hidden_value(self):
+        return T.tanh(
+            T.dot(self.c1, self.W1) + \
+            T.dot(self.c2, self.W2) + self.param.b1)
+
+    def get_recons_value(self):
+        '''
+        reconstruction
+        '''
+        y1 = self.f(self.W3 * self.p + self.b2)
+        y2 = self.f(self.W4 * self.p + self.b3)
+        return y1, y2
 
     @property
     def hidden_fn(self):
+        '''
+        :parameters:
+            x: the concation of both children's features
+        '''
         if not self._hidden_fn:
+            hidden = self.get_hidden_value()
             self._hidden_fn = theano.function(
-                [self.x],
-                T.tanh(T.dot(self.x, self.W) + self.b),
+                [self.c1, self.c2],
+                hidden,
                 allow_input_downcast=True,
                 )
         return self._hidden_fn
 
-    # -------------- two trainning methods ----------------
-    @property
-    def forward_train_fn(self):
+    def delta_out1_fn(self):
         '''
-        local updates with single node's forward and backward
-        reconstruction cost
+        f'(Y)(Y-C)
         '''
-        if not self._forward_train_fn:
-            cost, updates = self.get_cost_updates()
-            self._forward_train_fn = theano.function(
-                    [self.x, self.lcount, self.rcount], 
-                    cost, updates=updates,
-                    allow_input_downcast=True,
-                    on_unused_input='ignore',
-                    )
-        return self._forward_train_fn
-
-    @property
-    def back_recon_train_fn(self):
-        if not self._back_recon_train_fn:
-            cost, updates = self.get_back_recon_cost_updates()
-            self._back_recon_train_fn = theano.function(
-                    [self.fath_vec, 
-                        self.pre_lvec, self.pre_rvec,
-                        self.lcount, self.rcount],
-                    cost,
-                    update = updates)
-        return self._back_recon_train_fn
-
-    @property
-    def predict_fn(self):
-        if not self._predict_fn:
-            cost, updates = self.get_cost_updates()
-            hidden_value = self.get_hidden_values(self.x)
-            reconstructed_value = self.get_reconstructed_input(hidden_value)
-
-            self._predict_fn = theano.function(
-                    [self.x, self.lcount, self.rcount],
-                    [reconstructed_value, cost],
-                    allow_input_downcast=True,
-                    on_unused_input='ignore',
-                    )
-        return self._predict_fn
-
-    @property
-    def update_fn(self):
-        if not self._update_fn:
-            cost, updates = self.get_cost_updates()
-            gparams = T.grad(cost, self.params)
-            self._update_fn = theano.function(
-                [self.x, self.lcount, self.rcount],
-                gparams+[self.lw],
-                on_unused_input='ignore',
+        if not self._delta_out1_fn:
+            y1, y2 = self.get_recons_value()
+            self._delta_out1_fn = theano.function(
+                [self.p, self.c1],
+                self.f_der(y1) * (y1-self.c1)
                 )
-        return self._update_fn
+        return self._delta_out1_fn
 
-    def recon_fn(self):
-        pass
-
-
-    def train_iter(self, x, lcount, rcount):
+    def delta_out2_fn(self):
         '''
-        one iteration of the training process
-
-        :parameters:
-            x: the concatenation of two vectors(left and right)
-            lcount: count of left node's children
-            rcount: count of right node's children
+        f'(Y)(Y-C)
         '''
-        assert lcount > 0
-        assert rcount > 0
-        cost = self.train_fn(x, lcount, rcount)
-        return cost
+        if not self._delta_out2_fn:
+            y1, y2 = self.get_recons_value()
+            self._delta_out2_fn = theano.function(
+                [self.p, self.c2],
+                self.f_der(y2) * (y2-self.c2)
+                )
+        return self._delta_out2_fn
 
-    def predict(self, x, lcount, rcount):
+    def Y1C1_fn(self):
         '''
-        :returns:
-            hidden_value
-            cost
+        Y1 - C1
         '''
-        return self.predict_fn(x, lcount, rcount)
+        if not self._Y1C1_fn:
+            y1, y2 = self.get_recons_value()
+            self._Y1C1_fn = theano.function(
+                [self.p, self.c1],
+                y1 - self.c1
+                )
+        return self._Y1C1_fn
+
+    def Y2C2_fn(self):
+        '''
+        Y2 - C2
+        '''
+        if not self._Y2C2_fn:
+            y1, y2 = self.get_recons_value()
+            self._Y2C2_fn = theano.function(
+                [self.p, self.c2],
+                y2 - self.c2
+                )
+        return self._Y2C2_fn
 
 
+
+class RecursiveAutoencoder(object):
+
+    def __init__(self, len_vector=50, ae = None,):
+        self.len_vector = len_vector
+        self.ae = ae
+
+    def set_tree(self, root):
+        self.root = root
+
+    def forward_prop(self):
+        # update entire tree's feature
+        self.root.pred_index += 1
+        # both left and right child should exist
+        def update(node):
+            lvec = self.get_vec(node.lchild, self.root.pred_index)
+            rvec = self.get_vec(node.rchild, self.root.pred_index)
+            if lvec is None:
+                return
+            #print 'vec', vec
+            hidden = self.ae.hidden_fn(lvec, rvec)
+            node.vector = hidden
+            node.pred_index += 1
+            assert node.pred_index == self.root.pred_index
+            # reconstruction
+            node.delta_out1 = self.ae.delta_out_fn(hidden, lvec)
+            node.delta_out2 = self.ae.delta_out_fn(hidden, rvec)
+            # store Y1 - C1
+            node.Y1C1 = self.ae.Y1C1_fn(hidden, lvec)
+            # store Y2 - C2
+            node.Y2C2 = self.ae.Y2C2_fn(hidden, lvec)
+        # recursively update the entire tree
+        update(self.root)
+        self.root.pred_index -= 1
+
+    def backward_prop(self):
+        Ws = [numpy.zeros((self.len_vector, self.len_vector)),
+                self.W1, self.W2
+                ]
+        stack = []
+        stack.append([self.root, 0 , None])
+        self.root.parent_delta = numpy.zeros(self.len_vector)
+        Y0C0 = numpy.zeros((self.len_vector, 1))
+        while len(stack) > 0:
+            top = stack.pop()
+            current_node, left_or_right, parent_node = top
+            YCSelector = [Y0C0, None, None] if \
+                    parent_node == None \
+                    else  [Y0C0, parent_node.Y1C1, parent_node.Y2C2]
+            nodeW = Ws[left_or_right]
+            delta = YCSelector[left_or_right]
+            
+            # put in children
+            if not current_node.is_leaf():
+                stack.push([current_node.lchild, 1, current_node])
+                stack.push([current_node.rchild, 2, current_node])
+            A1 = current_node.vector
+            ND1, ND2 = current_node.delta_out1, current_node.delta_out2
+            PD = current_node.parent_delta
+            activation = self.ae.W3.T * ND1 + self.ae.W4.T * ND2 + nodeW.T * PD - delta
+            current_delta = self.ae.f_der(A1) * activation
+            current_node.lchild.parent_delta = current_delta
+            current_node.rchild.parent_delta = current_delta
+            # update
+            GW1_upd = current_delta * current_node.lchild.vector.T
+            GW2_upd = current_delta * current_node.rchild.vector.T
+            GW3_upd = ND1 * A1.T
+            GW4_upd = ND2 * A1.T
+            # change parameters
+            self.ae.W1 += GW1_upd
+            self.ae.W2 += GW2_upd
+            self.ae.W3 += GW3_upd
+            self.ae.W4 += GW4_upd
+
+
+    def get_vec(self, node, pred_index):
+        '''
+        get a node's pred_indexth updated vector 
+        '''
+        if not node:
+            return
+        if node.is_leaf() or node.pred_index == pred_index:
+            assert node.vector != None
+            return node.vector
+
+        lvec = self.get_vec(node.lchild, pred_index)
+        rvec = self.get_vec(node.rchild, pred_index)
+        assert lvec is not None
+        assert rvec is not None
+
+        node.vector = self.ae.hidden_fn(lvec, rvec)
+        node.pred_index += 1
+        assert node.pred_index == pred_index
+        return node.vector
