@@ -29,11 +29,11 @@ train_word2vec()
     toroot=$DATA_ROOT/models
     topath=$WORD2VEC_MODEL_PH
     path_list=$DATA_ROOT/duc.path.list
-    cd $DATA_ROOT/DUC
-    find `pwd` -name *.sent.clean.tree > $path_list
-    mkdir -p $toroot
+    #find `pwd` -name *.sent.clean.tree > $path_list
+    #mkdir -p $toroot
     cd $PROJECT_ROOT
-    cat $path_list | ./_word2vec.py $topath
+    #cat $path_list | ./_word2vec.py $topath
+    echo $DATA_ROOT/DUC/duc07/sentencs_text8.stem.sent | ./_word2vec.py $topath
 }
 
 _split_array()
@@ -75,7 +75,7 @@ gen_syntax_tree()
 train_parse_tree_autoencoder()
 {
     path_list=$DATA_ROOT/duc.path.list
-    cd $DATA_ROOT/DUC/duc07/sent_raw
+    cd $DATA_ROOT/DUC
     #cd $DATA_ROOT/DUC
     find `pwd` -name *.sent.clean.tree > $path_list
     cd $PROJECT_ROOT
@@ -85,8 +85,8 @@ train_parse_tree_autoencoder()
 stree_to_sentence_vec()
 {
     path_list=$DATA_ROOT/duc.path.list
-    bae_path=$DATA_ROOT/models/pta_full/0-9-0.725609.pk
-    cd $DATA_ROOT/DUC/duc06/sent_raw
+    bae_path=$DATA_ROOT/models/pta_full/0-3-0.749304.pk
+    cd $DATA_ROOT/DUC/duc07/sent_raw
     #cd $DATA_ROOT/DUC
     find `pwd` -name *.sent.clean.tree > $path_list
     cd $PROJECT_ROOT
@@ -105,22 +105,56 @@ train_graph_tree_autoencoder()
 
 vector_to_validate_format()
 {
-    path_list=$DATA_ROOT/duc.path.list
-    cd $DATA_ROOT/DUC/duc06/sent_raw
-    #cd $DATA_ROOT/DUC
-    find `pwd` -name *.sent > $path_list
-    cd tools
-    for path in `cat $path_list`; do
-        ./vector_to_validate_format.py $path $path.clean.tree.vec $path.json $path.vec
+    dataroot=$PROJECT_ROOT/data/DUC/duc07/sent_raw
+    valid_root=$PROJECT_ROOT/data/valid
+
+    # merge contents
+    for dir in `ls -1 $dataroot`; do
+        to_root=$dataroot/$dir
+        cat `ls -1 $dataroot/$dir/*.sent.valid | sort` > $to_root/$dir.sent.all
+        cat `ls -1 $dataroot/$dir/*.sent.clean.tree.vec | sort` > $to_root/$dir.sent.vec.all
+        output_root=$valid_root/$dir/10
+        mkdir -p $output_root
+        $PROJECT_ROOT/tools/vector_to_validate_format.py $to_root/$dir.sent.all $to_root/$dir.sent.vec.all $output_root $dir
     done
+}
+
+stree_to_sentence()
+{
+    path_list=$DATA_ROOT/duc.path.list
+    duc_path=$DATA_ROOT/DUC/duc07
+    cd $duc_path/sent_raw
+    #cd $DATA_ROOT/DUC
+    find `pwd` -name *.sent.clean.tree > $path_list
+    cd $PROJECT_ROOT/tools
+    
+    for path in `cat $path_list`; do
+        ./stree_to_sentence.py $path $path.sent
+    done
+}
+
+stem_sentence_to_one_file()
+{
+    duc_path=$DATA_ROOT/DUC/duc07
+    path_list=$DATA_ROOT/duc.path.list
+    topath=$duc_path/sentencs_text8.stem.sent
+    cd $duc_path/sent_raw
+    #cd $DATA_ROOT/DUC
+    find `pwd` -name *.sent.clean.tree.sent > $path_list
+
+    cd $PROJECT_ROOT/tools
+    cat ../data/text8 `cat $path_list` | ./stemer.py $topath
 }
 
 
 
 
 #clean_data
-#train_word2vec
+train_word2vec
 #gen_syntax_tree 4
-train_parse_tree_autoencoder
+#train_parse_tree_autoencoder
 #stree_to_sentence_vec
 #train_graph_tree_autoencoder
+#vector_to_validate_format
+#stree_to_sentence
+#stem_sentence_to_one_file

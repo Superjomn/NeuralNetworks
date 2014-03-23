@@ -64,7 +64,9 @@ if __name__ == "__main__":
         output = []
         with open(path) as f:
             strees = f.readlines()
-            for stree in strees:
+            # used to recoveray the original valid sentences
+            valid_line_nos = []
+            for no,stree in enumerate(strees):
                 stree = stree.strip()
                 #print 'parsing', stree
                 sentence_vec = tree2vec.get_vec_from_stree(stree)
@@ -72,8 +74,26 @@ if __name__ == "__main__":
                     str_vec = ' '.join([str(i) for i in sentence_vec])
                     c = str_vec + "\r"  + stree
                     output.append(c)
+                    valid_line_nos.append(no)
         topath = "%s.vec" % path
 
         print 'write res to', topath
         with open(topath, 'w') as f:
-            f.write('\n'.join(output))
+            content = '\n'.join(output)
+            if not content.endswith('\n'): content = content + '\n'
+            f.write(content)
+
+        assert path.endswith('sent.clean.tree')
+        ori_sent_path = '.'.join(path.split('.')[:3])
+        valid_sent_path = '%s.valid' % ori_sent_path
+        print 'write valid sentences to ', valid_sent_path
+
+        # load original sentences
+        with open(ori_sent_path) as f:
+            sents = f.readlines()
+        # output valid sentences
+        with open(valid_sent_path, 'w') as f:
+            valid_sents = [sents[no] for no in valid_line_nos]
+            content = ''.join(valid_sents)
+            if not content.endswith('\n'): content = content + '\n'
+            f.write(content)

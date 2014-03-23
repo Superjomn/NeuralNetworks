@@ -70,8 +70,9 @@ if __name__ == "__main__":
             while True:
                 line = f.readline()
                 if not line: break
-                tree = SyntaxTreeParser(line)
-                ss = tree.get_ori_sentence()
+                #tree = SyntaxTreeParser(line)
+                #ss = tree.get_ori_sentence()
+                ss = line.split()
                 sentences.append(ss)
 
     print 'generate sentences'

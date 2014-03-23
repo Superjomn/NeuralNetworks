@@ -150,7 +150,7 @@ if __name__ == "__main__":
     main = Main(
         w2v_ph = 'data/models/1.w2v',
         strees = strees,
-        model_root = "data/models/pta07/",
+        model_root = "data/models/pta_full/",
         n_step2save = 1,
         )
     main.run()
