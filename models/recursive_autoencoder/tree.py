@@ -30,6 +30,11 @@ class BinaryNode(BaseNode):
         # count of children
         self.n_children = np.float32(1.0)
         self.vector = vector
+        self.delta_out1 = None
+        self.delta_out2 = None
+        self.parent_delta = None
+        self.Y1C1 = None
+        self.Y2C2 = None
 
 
 

@@ -6,7 +6,7 @@ set -x
 PROJECT_ROOT=/home/chunwei/Lab/NeuralNetworks/apps/paper
 DATA_ROOT=$PROJECT_ROOT/data
 CLEAN_DATA_PATH=$DATA_ROOT/clean.sentences.txt
-WORD2VEC_MODEL_PH=$DATA_ROOT/models/1.w2v
+WORD2VEC_MODEL_PH=$DATA_ROOT/models/3.w2v
 
 DATA_PH=${DATA_ROOT}/duc06/sent_raw
 
@@ -29,11 +29,13 @@ train_word2vec()
     toroot=$DATA_ROOT/models
     topath=$WORD2VEC_MODEL_PH
     path_list=$DATA_ROOT/duc.path.list
-    #find `pwd` -name *.sent.clean.tree > $path_list
+    cd $PROJECT_ROOT/data/DUC/duc07
+    find `pwd` -name *.sent.clean.tree.sent > $path_list
     #mkdir -p $toroot
     cd $PROJECT_ROOT
     #cat $path_list | ./_word2vec.py $topath
-    echo $DATA_ROOT/DUC/duc07/sentencs_text8.stem.sent | ./_word2vec.py $topath
+    #echo $DATA_ROOT/DUC/duc07/sentencs_text8.stem.sent | ./_word2vec.py $topath
+    cat $path_list | ./_word2vec.py $topath
 }
 
 _split_array()

@@ -10,6 +10,7 @@ parse the syntax tree
 '''
 from __future__ import division
 import re
+import numpy as np
 import sys
 sys.path.append('../../..')
 from models.recursive_autoencoder.tree import BinaryNode
@@ -169,7 +170,7 @@ class SyntaxTreeParser(object):
         visit(self.root)
         return words
 
-    def init_leaf_vec(self, word2vec):
+    def init_leaf_vec(self, word2vec, to_column=False):
         '''
         init leaf's vectors
         '''
@@ -177,7 +178,11 @@ class SyntaxTreeParser(object):
             if not node: return
             if node.is_leaf():
                 word = node.get_word()
-                node.vector = word2vec.get_word_vec(word)
+                vector = word2vec.get_word_vec(word)
+                node.vector = vector
+                if to_column:
+                    len_vec = len(vector)
+                    node.vector = np.array(word2vec.get_word_vec(word)).reshape((len_vec, 1))
             else:
                 init_vec(node.lchild)
                 init_vec(node.rchild)

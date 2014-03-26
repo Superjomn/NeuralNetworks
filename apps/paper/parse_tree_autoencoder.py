@@ -14,9 +14,8 @@ import numpy as np
 sys.path.append('..')
 sys.path.append('../../')
 from paper import config as cg
-from models.recursive_autoencoder import BinaryAutoencoder
 from _word2vec import Trainer as Word2Vec
-from models.recursive_autoencoder.binary_tree_autoencoder import BinaryTree, BinaryTreeAutoencoder
+from models.recursive_autoencoder import RecursiveAutoencoder
 from syntax_tree.parse_tree import SyntaxTreeParser
 from exec_frame import BaseModel, ExecFrame
 
@@ -31,39 +30,20 @@ class ParseTreeAutoencoder(object):
         '''
         self.word2vec = word2vec
         self.len_vector = cg.LEN_WORD_VECTOR
-        self.bta = BinaryTreeAutoencoder(
-            len_vector = self.len_vector,
+        self.rae = RecursiveAutoencoder(
+            len_vec = self.len_vector,
             )
-        # binary autoencoder
-        self.bae = self.bta.bae
 
     def train_with_tree(self, parse_tree):
         '''
         :parameters:
             parse_tree: string
         '''
-        tree = self.create_tree(parse_tree)
-        bt = BinaryTree(tree.root, self.bae)
-        if bt.n_children < 5:
-            print '!! skip tree: two less children'
-            print '>\t', parse_tree
-            return
-        return self.bta.train_with_tree(bt)
-
-    def create_tree(self, stree):
-        '''
-        parse a line and return a tree
-
-        :parameters:
-            stree: string
-
-        :returns:
-            syntax_tree : object of SyntaxTreeParser
-        '''
-        syntax_tree = SyntaxTreeParser(stree)
+        syntax_tree = SyntaxTreeParser(parse_tree)
         # init leaf node's vector
-        syntax_tree.init_leaf_vec(self.word2vec)
-        return syntax_tree
+        syntax_tree.init_leaf_vec(self.word2vec, to_column=True)
+        for i in range(100):
+            self.rae.train_with_tree(syntax_tree)
 
 
 
@@ -124,33 +104,9 @@ def get_stree_from_paths(paths):
 
 
 if __name__ == "__main__":
-    '''
-    data_ph = "./data/syntax_trees.txt"
-    trees = []
-    with open(data_ph) as f:
-        while True:
-            line = f.readline()
-            if not line:break
-            trees.append(line)
-
+    w2v_ph = "/home/chunwei/Lab/NeuralNetworks/apps/paper/data/models/3.w2v"
     _word2vec = Word2Vec()
-    _word2vec.model_fromfile('data/models/2.w2v')
-    pa = ParseTreeAutoencoder(_word2vec)
+    _word2vec.model_fromfile(w2v_ph)
 
-    for tree in trees:
-        #print 'train:', tree
-        cost = pa.train_with_tree(tree)
-        print 'cost', cost
-    '''
-    data_phs = sys.stdin.read().split()
-
-    #data_ph = "./data/syntax_trees.txt"
-    strees = get_stree_from_paths(data_phs)
-
-    main = Main(
-        w2v_ph = 'data/models/1.w2v',
-        strees = strees,
-        model_root = "data/models/pta_full/",
-        n_step2save = 1,
-        )
-    main.run()
+    parse_tree_autoencoder = ParseTreeAutoencoder(word2vec=_word2vec)
+    parse_tree_autoencoder.train_with_tree("(S (NP (NNP BERLIN) (NNP European) (NNP Central) (NNP Bank) (NNP President) (NNP Wim) (NNP Duisenberg)) (VP (VBD said) (NP (NNP Thursday)) (SBAR (IN that) (S (NP (NP (NP (NNP Europe) (POS 's)) (JJ new) (JJ single) (NN currency)) (, ,) (NP (DT the) (NN euro)) (, ,)) (VP (MD wo) (RB n't) (VP (VB compete) (PP (IN with) (NP (DT the) (NNP U.S.) (NN dollar))) (PP (IN as) (NP (NP (DT the) (NN currency)) (PP (IN of) (NP (NP (NN choice)) (PP (IN for) (NP (JJ foreign) (NNS reserves)))))))))))))")
