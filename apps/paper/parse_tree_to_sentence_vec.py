@@ -35,7 +35,7 @@ class Tree2Vec(ParseTreeAutoencoder):
         '''
         parse_tree = self.create_tree(stree)
         bt = BinaryTree(parse_tree.root, self.bae)
-        if bt.n_children < 5:
+        if bt.n_children < 2:
             print '!! skip tree: two less children'
             print '>\t', parse_tree
             return

@@ -77,11 +77,13 @@ gen_syntax_tree()
 train_parse_tree_autoencoder()
 {
     path_list=$DATA_ROOT/duc.path.list
-    cd $DATA_ROOT/DUC
+    w2v_path=$DATA_ROOT/models/3.w2v
+    model_root=$DATA_ROOT/models/pta07
+    cd $DATA_ROOT/DUC/duc07/sent_raw
     #cd $DATA_ROOT/DUC
     find `pwd` -name *.sent.clean.tree > $path_list
     cd $PROJECT_ROOT
-    cat $path_list | ./parse_tree_autoencoder.py
+    cat $path_list | ./parse_tree_autoencoder.py $model_root $w2v_path 
 }
 
 stree_to_sentence_vec()
@@ -152,9 +154,9 @@ stem_sentence_to_one_file()
 
 
 #clean_data
-train_word2vec
+#train_word2vec
 #gen_syntax_tree 4
-#train_parse_tree_autoencoder
+train_parse_tree_autoencoder
 #stree_to_sentence_vec
 #train_graph_tree_autoencoder
 #vector_to_validate_format

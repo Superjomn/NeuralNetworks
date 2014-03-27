@@ -118,6 +118,7 @@ class SyntaxTreeParser(object):
         self.line = line
         if self.line:
             self.build_tree()
+        self._init_node_children_count()
 
     def set_sentence(self, line):
         self.line = line
@@ -188,7 +189,16 @@ class SyntaxTreeParser(object):
                 init_vec(node.rchild)
 
         init_vec(self.root)
-    
+
+    def _init_node_children_count(self):
+        def scan(node):
+            if not node.is_leaf():
+                node.n_children = scan(node.lchild) + scan(node.rchild)
+            else:
+                node.n_children = 0
+
+            return node.n_children + 1
+        scan(self.root)
 
     def draw_graph(self, fname="tmp.dot", detail=False):
         '''

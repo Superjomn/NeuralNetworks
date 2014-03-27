@@ -134,8 +134,9 @@ class RecursiveAutoencoder(Autoencoder):
     def train_with_tree(self, tree):
         self.root = tree.root
         cost = self.forward_prop()
-        print 'forward cost', cost
+        #print 'forward cost', cost
         self.backward_prop()
+        return cost
 
     def backward_prop(self):
         Ws = [np.zeros((self.len_vec, self.len_vec)),

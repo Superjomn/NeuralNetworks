@@ -40,6 +40,13 @@ class BaseModel(object):
         '''
         return self
 
+    def save_model(self, toroot, name):
+        path = os.path.join(toroot, name)
+        print 'save model to', path
+        with open(path, 'rb') as f:
+            pk.dump(self.get_model(), f)
+            
+
 
 
 class WindowCosts(object):
